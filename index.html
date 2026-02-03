@@ -1560,7 +1560,7 @@ const App = (() => {
     };
 
     const updateAIModelLabel = () => {
-        const el = getElementById('ai-model-label');
+        const el = getEl('ai-model-label');
         if (!el) return;
 
         const model = state.settings.aiModel || 'gemini-2.5-flash';
