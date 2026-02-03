@@ -603,4 +603,1065 @@ main { order: 3; padding-bottom: 20px !important; }
         </style>
 
         <span class="stat-label">Nuvem</span>
-        <div id="firebase-ui-area" style="margin-bottom:25px; padding:1
+        <div id="firebase-ui-area" style="margin-bottom:25px; padding:15px; border:1px solid var(--border); border-radius:16px; background: var(--bg-elevated);">
+            
+            <div class="row">
+                <button class="action-chip" onclick="app.googleLogin()" style="border:none; background: var(--bg-card); box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                    <i class="ph-bold ph-google-logo"></i> Entrar
+                </button>
+                 <button class="action-chip" onclick="app.logout()" style="border:none; background: var(--bg-card); color: var(--danger);">
+                    Sair
+                </button>
+            </div>
+            <div id="user-status" style="font-size:12px; margin-top:10px; color:var(--text-secondary); display:flex; align-items:center; gap:5px;">
+                <i data-lucide="circle" width="10" height="10"></i> Offline
+            </div>
+        </div>
+
+        <span class="stat-label">Metas Corporais</span>
+        <div class="row" style="gap:10px; margin-bottom:10px;">
+            <input type="number" id="cfg-goal" class="modern-input" placeholder="Meta (kg)" style="height: 45px;">
+            <input type="number" id="cfg-height" class="modern-input" placeholder="Altura (cm)" style="height: 45px;">
+        </div>
+        
+        <button class="btn-primary" onclick="app.saveSettings()" style="margin-top: 20px;">Salvar Alterações</button>
+        
+        <div style="text-align:center; margin-top: 20px;">
+            <button style="background:none; border:none; color: var(--danger); font-size: 12px; cursor: pointer;" onclick="if(confirm('Isso apaga TUDO. Tem certeza?')) { localStorage.clear(); location.reload(); }">Resetar App Completo</button>
+        </div>
+    </div>
+</div>
+<div id="modal-food" class="modal">
+    <div class="modal-content">
+        <div class="row" style="margin-bottom:20px;">
+            <h3 style="margin:0">Registrar Refeição</h3>
+            <button class="btn-icon" onclick="app.toggleFoodModal()">
+                <i data-lucide="x" width="20" height="20"></i>
+            </button>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:12px;">
+            <input type="text" id="food-name" class="modern-input" placeholder="Nome (ex: Almoço, Whey...)" autocomplete="off">
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <input type="number" id="food-kcal" class="modern-input" placeholder="Calorias (kcal)">
+                <input type="number" id="food-prot" class="modern-input" placeholder="Proteína (g)">
+            </div>
+
+            <button class="btn-primary" onclick="app.saveFood()">
+                <i data-lucide="check" width="20" height="20"></i> Salvar Registro
+            </button>
+        </div>
+    </div>
+</div>
+<div id="modal-prompt" class="modal" style="z-index: 2000;">
+        <div class="modal-content" style="max-width: 320px; text-align: center;">
+            <h3 id="prompt-msg" style="margin: 0 0 20px 0;">Pergunta</h3>
+            
+            <input type="text" id="prompt-input" class="modern-input" autocomplete="off" style="margin-bottom: 20px;">
+            
+            <div class="row" style="justify-content: center; gap: 15px;">
+                <button class="action-chip" onclick="app.resolvePrompt(null)" style="color: var(--danger); border-color: var(--border);">
+                    Cancelar
+                </button>
+                <button class="action-chip" onclick="app.resolvePrompt(true)" style="background: var(--accent); color: white; border: none;">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+<script>
+const App = (() => {
+    // --- STATE ---
+    let state = {
+        entries: [],
+        foodLogs: [],
+        chatHistory: [],
+        aiUsage: { count: 0, date: '' },
+        settings: { 
+            theme: 'dark', 
+            goal: 70, 
+            height: 175, 
+            apiKey: '', 
+            pin: null, 
+            firebaseConfig: '',
+            aiModel: 'gemini-2.5-flash'
+        },
+        updatedAt: new Date(0).toISOString(),
+        user: null,
+        chart: null,
+        currentImageBase64: null,
+        unlocked: false
+
+        
+    };
+
+    let auth, db;
+
+    // --- HELPERS ---
+    const getEl = (id) => document.getElementById(id);
+    const showToast = (msg, type='info') => {
+        const c = getEl('toast-container');
+        const t = document.createElement('div');
+        t.className = 'toast';
+        let icon = type === 'success' ? 'check-circle' : (type === 'error' ? 'warning-circle' : 'info');
+        let color = type === 'success' ? 'var(--success)' : (type === 'error' ? 'var(--danger)' : 'var(--accent)');
+        t.innerHTML = `<i class="ph-fill ph-${icon}" style="color:${color}; font-size: 18px;"></i> ${msg}`;
+        c.appendChild(t);
+        setTimeout(() => {
+            t.style.opacity = '0';
+            t.style.transform = 'translateY(-20px)';
+            setTimeout(() => t.remove(), 300);
+        }, 3000);
+    };
+
+    // --- INIT ---
+    const init = async () => {
+        loadLocal();
+        updateAIModelLabel();
+
+        if (state.settings.firebaseConfig) {
+            tryInitFirebase(JSON.parse(state.settings.firebaseConfig));
+        }
+
+        if (state.settings.pin && !state.unlocked) {
+            getEl('pin-overlay').classList.add('locked');
+        } else {
+            getEl('main-app').classList.add('loaded');
+        }
+
+        const setupUI = () => {
+            const tx = getEl('ai-input');
+
+            if(tx) {
+                tx.addEventListener('input', function() {
+                    this.style.height = 'auto';
+                    this.style.height = (this.scrollHeight) + 'px';
+                    if(this.scrollHeight > 150) this.style.overflowY = "auto";
+                    else this.style.overflowY = "hidden";
+                });
+
+                tx.addEventListener('keydown', (e) => {
+                    if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                        e.preventDefault();
+                        sendAI();
+                    }
+                });
+            }
+            
+            const inputs = document.querySelectorAll('input, textarea');
+            const nav = document.querySelector('.bottom-nav');
+            
+            inputs.forEach(inp => {
+                inp.addEventListener('focus', () => {
+                    if(window.innerWidth < 768 && nav) nav.style.display = 'none';
+                });
+                
+                inp.addEventListener('blur', () => {
+                    setTimeout(() => {
+                        if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                            if(nav) nav.style.display = 'flex';
+                        }
+                    }, 200);
+                });
+            });
+
+            document.body.addEventListener('touchmove', (e) => {
+                if(getEl('modal-settings').classList.contains('active')) return;
+            }, {passive: false});
+        };
+        
+        setupUI();
+        
+        lucide.createIcons();
+        render();
+        
+        if(state.chatHistory.length > 0) renderChatHistory();
+    };
+
+    const loadLocal = () => {
+        try {
+            const d = localStorage.getItem('wp_data');
+            if (d) {
+                const parsed = JSON.parse(d);
+                const today = new Date().toISOString().split('T')[0];
+
+                if (Array.isArray(parsed)) {
+                    state.entries = parsed;
+                    state.aiUsage = { count: 0, date: today };
+                } else {
+
+                    state.entries = parsed.entries || [];
+                    state.chatHistory = parsed.chatHistory || [];
+                    state.foodLogs = parsed.foodLogs || [];
+                    state.updatedAt = parsed.updatedAt || new Date(0).toISOString();
+                    
+                    const savedUsage = parsed.aiUsage || { count: 0, date: '' };
+
+                    if (savedUsage.date !== today) {
+                        state.aiUsage = { count: 0, date: today };
+                    } else {
+                        state.aiUsage = savedUsage;
+                    }
+                }
+            } else {
+                state.aiUsage = { count: 0, date: new Date().toISOString().split('T')[0] };
+            }
+            
+            const s = localStorage.getItem('wp_settings');
+            if (s) state.settings = { ...state.settings, ...JSON.parse(s) };
+            
+            state.entries.forEach(e => {
+                if(e.date.includes('T')) e.date = e.date.split('T')[0];
+            });
+
+            getEl('inp-date').value = new Date().toISOString().split('T')[0];
+        } catch(e) { console.error("Erro load", e); }
+    };
+
+    const saveLocal = () => {
+        // Agora salvamos tudo num objeto estruturado com data
+        const dataToSave = {
+            entries: state.entries,
+            chatHistory: state.chatHistory,
+            updatedAt: state.updatedAt,
+            aiUsage: state.aiUsage
+        };
+        localStorage.setItem('wp_data', JSON.stringify(dataToSave));
+        localStorage.setItem('wp_settings', JSON.stringify(state.settings));
+    };
+
+    const touchState = () => {
+        state.updatedAt = new Date().toISOString();
+        saveLocal();
+    };
+
+    // --- FIREBASE ---
+    const tryInitFirebase = (config) => {
+        try {
+            const { initializeApp, getAuth, onAuthStateChanged, getFirestore } = window.firebaseModules;
+            const fbApp = initializeApp(config);
+            auth = getAuth(fbApp);
+            db = getFirestore(fbApp);
+
+            onAuthStateChanged(auth, (user) => {
+                state.user = user;
+                const st = getEl('user-status');
+                if (user) {
+                    st.innerHTML = `<i class="ph-fill ph-check-circle" style="color:var(--success)"></i> ${user.email}`;
+                    syncData(); 
+                } else {
+                    st.innerHTML = `<i class="ph-fill ph-warning-circle" style="color:var(--danger)"></i> Desconectado`;
+                }
+            });
+        } catch (e) {
+            console.warn("Firebase Init Fail", e);
+        }
+    };
+
+    const googleLogin = async () => {
+        if (!auth) {
+            const rawConfig = '{"apiKey": "AIzaSyBX-gqsBc2DT4qJcqvfmuZij9VPwvCaa4w", "authDomain": "weigh-pro.firebaseapp.com", "projectId": "weigh-pro", "storageBucket": "weigh-pro.firebasestorage.app", "messagingSenderId": "165706164239", "appId": "1:165706164239:web:3e85f466d29029608d1b7a", "measurementId": "G-H17Q1C1VRK"}'
+            if (rawConfig && rawConfig.trim() !== '') {
+                try {
+                    tryInitFirebase(JSON.parse(rawConfig));
+                    state.settings.firebaseConfig = rawConfig;
+                    saveSettings(); 
+                } catch(e) {
+                    return showToast("JSON inválido. Cole apenas o objeto {...}", "error");
+                }
+            }
+        }
+        if (!auth) return showToast("Cole o JSON e Salve.", "error");
+        const { signInWithPopup, GoogleAuthProvider } = window.firebaseModules;
+        try { 
+            await signInWithPopup(auth, new GoogleAuthProvider()); 
+            showToast("Login realizado!", "success");
+        } catch(e) { showToast("Erro: " + e.message, "error"); }
+    };
+    
+    const logout = async () => {
+        if(!auth) return;
+        const { signOut } = window.firebaseModules;
+        await signOut(auth);
+        state.user = null;
+        showToast("Desconectado.");
+    };
+
+    // --- NOVA LÓGICA DE SINCRONIZAÇÃO (CORREÇÃO DE BUGS) ---
+    const syncData = async () => {
+        if (!state.user || !db) return;
+        const { doc, getDoc, setDoc } = window.firebaseModules;
+        const userRef = doc(db, 'users', state.user.uid);
+        
+        try {
+            const snap = await getDoc(userRef);
+            if (snap.exists()) {
+                const cloud = snap.data();
+                
+                const localDate = new Date(state.updatedAt).getTime();
+                const cloudDate = new Date(cloud.updatedAt || 0).getTime();
+
+                const cloudHasData = (cloud.entries && cloud.entries.length > 0);
+                const localIsEmpty = (state.entries.length === 0);
+
+                if (localIsEmpty && cloudHasData) {
+                    console.log("Proteção ativada: Baixando dados da nuvem para dispositivo vazio.");
+                    applyCloudData(cloud);
+                    return;
+                }
+
+                if (cloudDate > localDate) {
+                    applyCloudData(cloud);
+                } else if (localDate > cloudDate) {
+                    pushToCloud();
+                }
+            } else {
+                pushToCloud();
+            }
+        } catch(e) { console.error("Erro sync", e); }
+    };
+
+    const applyCloudData = (cloud) => {
+        state.entries = cloud.entries || [];
+        state.chatHistory = cloud.chatHistory || [];
+        state.foodLogs = cloud.foodLogs || [];
+        state.settings = { ...state.settings, ...cloud.settings };
+        
+        state.updatedAt = cloud.updatedAt;
+        saveLocal();
+        render();
+        if(state.chatHistory.length > 0) renderChatHistory();
+        if(typeof renderFood === 'function') renderFood();
+        showToast("Dados sincronizados.");
+    };
+
+    const pushToCloud = async () => {
+        if (!state.user || !db) return;
+        const { doc, setDoc } = window.firebaseModules;
+        
+        await setDoc(doc(db, 'users', state.user.uid), { 
+            entries: state.entries, 
+            chatHistory: state.chatHistory, // Sincroniza chat
+            settings: state.settings,
+            updatedAt: state.updatedAt // Manda a data atualizada
+        }, { merge: true });
+    };
+
+    // --- CORE ---
+    const addEntry = () => {
+        let rawInput = getEl('inp-weight').value;
+        const d = getEl('inp-date').value;
+
+        // Correção iOS
+        rawInput = rawInput.replace(',', '.');
+        const w = parseFloat(rawInput);
+        
+        if (!w || w <= 0 || w > 500) return showToast("Peso inválido.", "error");
+        if (!d) return showToast("Data inválida.", "error");
+
+        state.entries.push({ id: Date.now(), weight: w, date: d });
+        state.entries.sort((a,b) => b.date.localeCompare(a.date));
+        
+        touchState(); // Atualiza data
+        pushToCloud(); // Sincroniza
+        render();
+        
+        getEl('inp-weight').value = '';
+        showToast("Peso registrado!", "success");
+    };
+
+    const deleteEntry = (id) => {
+        if(confirm("Excluir este registro?")) {
+            state.entries = state.entries.filter(e => e.id !== id);
+            touchState(); // IMPORTANTE: Atualiza data para a nuvem saber que mudou
+            pushToCloud();
+            render();
+            showToast("Registro removido.");
+        }
+    };
+
+    // --- RENDER ---
+    const render = () => {
+        const empty = state.entries.length === 0;
+        
+        if (empty) {
+            getEl('val-current').innerText = "--";
+            getEl('txt-start').innerText = "Início: --";
+            getEl('trend-pill').innerText = "--";
+            getEl('bar-progress').style.width = "0%";
+            getEl('smart-prediction').innerText = "";
+            renderChart(); 
+            getEl('history-list').innerHTML = `<div class="empty-state"><i class="ph ph-clipboard-text"></i>Sem registros ainda.</div>`;
+            return;
+        }
+
+        const current = state.entries[0];
+        const start = state.entries[state.entries.length - 1];
+        const goal = parseFloat(state.settings.goal) || 70;
+
+        getEl('val-current').innerText = current.weight.toFixed(1);
+        getEl('txt-start').innerText = `Início: ${start.weight}kg`;
+        getEl('txt-goal').innerText = `Meta: ${goal}kg`;
+
+        const totalDist = Math.abs(start.weight - goal);
+        let pct = 0;
+        const isLoss = start.weight > goal;
+        if (isLoss) {
+             pct = (start.weight - current.weight) / (start.weight - goal) * 100;
+        } else {
+             pct = (current.weight - start.weight) / (goal - start.weight) * 100;
+        }
+        
+        pct = Math.min(100, Math.max(0, pct));
+        getEl('bar-progress').style.width = `${pct}%`;
+
+        if (state.entries.length > 1) {
+            const prev = state.entries[1];
+            const diff = current.weight - prev.weight;
+            const trendEl = getEl('trend-pill');
+            if (Math.abs(diff) < 0.1) {
+                trendEl.style.color = 'var(--text-secondary)';
+                trendEl.innerHTML = `= Estável`;
+            } else if (diff < 0) {
+                trendEl.style.color = 'var(--success)';
+                trendEl.innerHTML = `<i data-lucide="trending-up" width="20" height="20"></i> ${diff.toFixed(1)}kg`;
+            } else {
+                trendEl.style.color = 'var(--danger)';
+                trendEl.innerHTML = `<i data-lucide="trending-down" width="20" height="20"></i> +${diff.toFixed(1)}kg`;
+            }
+        }
+
+        renderStats(current, start, goal);
+        renderHistory();
+        renderChart();
+    };
+
+    const renderStats = (current, start, goal) => {
+        const h = (parseFloat(state.settings.height) || 170) / 100;
+        const bmi = current.weight / (h * h);
+        getEl('bmi-val').innerText = bmi.toFixed(1);
+        
+        let label = "Normal", pos = 33, color = "var(--success)";
+        if (bmi < 18.5) { label="Abaixo"; pos=10; color="#64D2FF"; }
+        else if (bmi >= 25 && bmi < 30) { label="Sobrepeso"; pos=70; color="#FFD60A"; }
+        else if (bmi >= 30) { label="Obesidade"; pos=95; color="#FF453A"; }
+        
+        const badge = getEl('bmi-label');
+        badge.innerText = label;
+        badge.style.color = color;
+        badge.style.background = color + '22'; 
+        getEl('bmi-marker').style.left = `${pos}%`;
+
+        getEl('total-loss').innerText = (start.weight - current.weight).toFixed(1) + "kg";
+        if(start.weight < current.weight) getEl('total-loss').style.color = 'var(--danger)';
+
+        const recentEntries = state.entries.filter(e => {
+            const d = new Date(e.date);
+            const now = new Date();
+            return (now - d) / (1000 * 3600 * 24) <= 30;
+        });
+
+        if (recentEntries.length >= 2) {
+            const first = recentEntries[recentEntries.length-1];
+            const last = recentEntries[0];
+            const days = (new Date(last.date) - new Date(first.date)) / (1000 * 3600 * 24);
+            const loss = first.weight - last.weight;
+            
+            if (days > 0) {
+                const ratePerDay = loss / days;
+                const rateWeek = ratePerDay * 7;
+                
+                getEl('stat-rate').innerText = (rateWeek > 0 ? '-' : '+') + Math.abs(rateWeek).toFixed(1) + "kg";
+                getEl('stat-rate').style.color = rateWeek > 0 ? 'var(--success)' : 'var(--danger)';
+
+                const remaining = current.weight - goal;
+                if (remaining > 0 && ratePerDay > 0) {
+                    const daysLeft = remaining / ratePerDay;
+                    const date = new Date();
+                    date.setDate(date.getDate() + daysLeft);
+                    
+                    getEl('proj-remaining').innerText = remaining.toFixed(1) + "kg";
+                    getEl('proj-date').innerText = date.toLocaleDateString('pt-BR', {day:'numeric', month:'short'});
+                    getEl('smart-prediction').innerText = `✨ Previsão: ${date.toLocaleDateString()}`;
+                } else {
+                    getEl('proj-remaining').innerText = "--"; 
+                    getEl('proj-date').innerText = "--";
+                    getEl('smart-prediction').innerText = "Continue firme.";
+                }
+            }
+        }
+
+        const weekEntries = state.entries.slice(0, 7);
+        const avg = weekEntries.reduce((a,b) => a + b.weight, 0) / weekEntries.length;
+        getEl('stat-avg').innerText = avg.toFixed(1) + "kg";
+    };
+
+    const renderHistory = () => {
+        const list = getEl('history-list');
+        
+        list.innerHTML = state.entries.map(e => {
+            const dateObj = new Date(e.date + 'T12:00:00'); 
+            return `
+            <div style="display:flex; justify-content:space-between; padding:16px; background:var(--bg-elevated); border-radius:16px; align-items:center;">
+                <div>
+                    <strong style="font-size:17px;">${e.weight}kg</strong>
+                    <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">
+                        ${dateObj.toLocaleDateString('pt-BR', {weekday: 'short', day:'2-digit', month:'long'})}
+                    </div>
+                </div>
+                <button onclick="app.deleteEntry(${e.id})" class="btn-icon" style="width:32px; height:32px; color:var(--danger); background:transparent;">
+                    <i data-lucide="trash-2" width="15" height="15"></i>
+                </button>
+            </div>
+            `;
+        }).join('');
+
+        if(window.lucide) lucide.createIcons();
+    };
+
+    const renderChart = () => {
+        const ctx = getEl('mainChart').getContext('2d');
+        const emptyEl = getEl('chart-empty');
+        const canvas = getEl('mainChart');
+
+        if (state.chart) { state.chart.destroy(); state.chart = null; }
+
+        if (state.entries.length < 2) {
+            canvas.classList.add('hidden');
+            emptyEl.classList.remove('hidden');
+            return;
+        }
+
+        canvas.classList.remove('hidden');
+        emptyEl.classList.add('hidden');
+
+        const range = getEl('chart-range').value;
+        let data = [...state.entries].reverse(); 
+        
+        if (range === 'custom') {
+            const sStr = getEl('date-start').value;
+            const eStr = getEl('date-end').value;
+            if(sStr && eStr) data = data.filter(i => i.date >= sStr && i.date <= eStr);
+        } else if (parseInt(range) > 0) {
+            data = data.slice(-parseInt(range));
+        }
+
+        if (data.length === 0) return;
+
+        const accent = getComputedStyle(document.body).getPropertyValue('--accent').trim();
+        const gridColor = state.settings.theme === 'light' ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)';
+
+        state.chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.map(e => {
+                    const d = new Date(e.date + 'T12:00:00');
+                    return d.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'});
+                }),
+                datasets: [{
+                    label: 'Peso',
+                    data: data.map(e => e.weight),
+                    borderColor: accent,
+                    backgroundColor: (ctx) => {
+                        const grad = ctx.chart.ctx.createLinearGradient(0, 0, 0, 300);
+                        grad.addColorStop(0, accent + '40');
+                        grad.addColorStop(1, accent + '00');
+                        return grad;
+                    },
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 3,
+                    pointBackgroundColor: varColor => varColor.raw === Math.min(...data.map(d=>d.weight)) ? '#32D74B' : accent,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true, 
+                maintainAspectRatio: false,
+                plugins: { legend: {display:false}, tooltip: { mode: 'index', intersect: false } },
+                scales: { 
+                    x: { grid: {display:false}, ticks: {color: '#8E8E93', maxTicksLimit: 6} },
+                    y: { grid: {color: gridColor}, ticks: {color: '#8E8E93'} }
+                },
+                interaction: { mode: 'nearest', axis: 'x', intersect: false }
+            }
+        });
+    };
+
+    const handleRangeChange = () => {
+        const val = getEl('chart-range').value;
+        if(val === 'custom') getEl('custom-date-container').classList.remove('hidden');
+        else {
+            getEl('custom-date-container').classList.add('hidden');
+            renderChart();
+        }
+    };
+
+    // --- AI & CHAT ---
+    const handleImageUpload = (input) => {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            state.currentImageBase64 = e.target.result.split(',')[1];
+            getEl('img-preview').src = e.target.result;
+            getEl('img-preview-container').classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const clearImage = () => {
+        state.currentImageBase64 = null;
+        getEl('img-preview-container').classList.add('hidden');
+        getEl('file-upload').value = '';
+    };
+
+    const aiPrompt = async (type) => {
+        if (type === 'receita') {
+            // Chama a janela de pergunta
+            const ingredientes = await app.ask("Quais ingredientes você tem?", "Ex: Ovos, frango, batata...");
+            
+            // Se cancelar, para aqui
+            if (!ingredientes) return;
+
+            const prompt = `Sugira uma receita fit rápida usando: ${ingredientes}. Inclua contagem de calorias.`;
+            getEl('ai-input').value = prompt;
+            getEl('ai-input').style.height = 'auto'; // Ajusta altura
+        } 
+        else if (type === 'coach') {
+            getEl('ai-input').value = 'Analise meu progresso (considerando que quero perder peso) e me dê uma frase motivacional estoica.';
+            getEl('ai-input').style.height = 'auto';
+        }
+    };
+
+    // Função para renderizar histórico ao carregar
+    const renderChatHistory = () => {
+        const feed = getEl('chat-feed');
+        // Mantém a mensagem de boas vindas se for o único
+        if(state.chatHistory.length > 0) feed.innerHTML = ''; 
+        
+        state.chatHistory.forEach(msg => {
+            const div = document.createElement('div');
+            div.className = `chat-bubble chat-${msg.role}`;
+            div.innerHTML = msg.content;
+            feed.appendChild(div);
+        });
+        feed.scrollTo(0, feed.scrollHeight);
+    };
+
+    const saveChatMsg = (role, content) => {
+        state.chatHistory.push({ role, content });
+        touchState(); // Atualiza data
+        pushToCloud();
+    };
+
+    const sendAI = async () => {
+        const txt = getEl('ai-input').value.trim();
+        const img = state.currentImageBase64;
+        
+        if (!txt && !img) return;
+        if (!state.settings.apiKey) return showToast("Configure a API Key.", "error");
+
+        const feed = getEl('chat-feed');
+        
+        // 1. UI User (Mostra o que você enviou)
+        const userHtml = `${txt} ${img ? '<div style="margin-top:5px; font-size:11px; opacity:0.8"><i class="ph-fill ph-image"></i> Imagem enviada</div>' : ''}`;
+        feed.innerHTML += `<div class="chat-bubble chat-user">${userHtml}</div>`;
+        saveChatMsg('user', userHtml);
+
+        getEl('ai-input').value = '';
+        clearImage();
+        
+        // 2. Loader (Analisando...)
+        const loadId = 'load-' + Date.now();
+        feed.innerHTML += `<div class="chat-bubble chat-ai" id="${loadId}"><i data-lucide="loader-2" class="spin" width="16" height="16"></i> Analisando...</div>`;
+        if(window.lucide) lucide.createIcons();
+        feed.scrollTo(0, feed.scrollHeight);
+
+        try {
+            const model = state.settings.aiModel || "gemini-2.5-flash";
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${state.settings.apiKey}`;
+            
+            // --- O TRUQUE ESTÁ AQUI: INSTRUÇÃO ESPECIAL ---
+            const systemPrompt = `
+            Você é um nutricionista do app WeighPro. 
+            Se o usuário enviar uma foto de comida ou descrever uma refeição, VOCÊ DEVE responder NO FINAL da sua explicação com um bloco de código JSON estrito neste formato para eu criar um botão:
+            
+            \`\`\`json
+            {
+                "tool": "addFood",
+                "name": "Nome do Prato Resumido",
+                "kcal": 500,
+                "prot": 30
+            }
+            \`\`\`
+            
+            Se não for comida, responda apenas texto normal amigável em Markdown. Seja conciso.
+            Contexto: Peso atual ${state.entries[0]?.weight || '?'}kg, Meta ${state.settings.goal}kg.
+            `;
+
+            const parts = [{ text: systemPrompt }];
+            if (txt) parts.push({ text: txt });
+            if (img) parts.push({ inline_data: { mime_type: "image/jpeg", data: img } });
+
+            const resp = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: parts }] })
+            });
+
+            const json = await resp.json();
+            if (json.error) throw new Error(json.error.message);
+            
+            let aiTxt = json.candidates[0].content.parts[0].text;
+            
+            // 3. Processar a resposta para achar o botão
+            let buttonHtml = '';
+            
+            // Regex para capturar o bloco JSON
+            const jsonMatch = aiTxt.match(/```json\s*([\s\S]*?)\s*```/);
+            
+            if (jsonMatch) {
+                try {
+                    const data = JSON.parse(jsonMatch[1]);
+                    if (data.tool === 'addFood') {
+                        // Remove o JSON do texto visível para não ficar feio
+                        aiTxt = aiTxt.replace(jsonMatch[0], '');
+                        
+                        // Cria o Botão Mágico
+                        // Usamos aspas simples escapadas \' nos argumentos
+                        buttonHtml = `
+                        <div style="margin-top:10px; border-top:1px solid var(--border); padding-top:10px;">
+                            <button class="action-chip" onclick="app.quickAddFood('${data.name}', ${data.kcal}, ${data.prot})">
+                                <i data-lucide="plus-circle" width="16" height="16"></i> 
+                                Salvar: ${data.name} (${data.kcal}kcal)
+                            </button>
+                        </div>`;
+                    }
+                } catch (e) { console.error("Erro ao parsear JSON da IA", e); }
+            }
+
+            const finalHtml = marked.parse(aiTxt) + buttonHtml;
+            
+            document.getElementById(loadId).innerHTML = finalHtml;
+            saveChatMsg('ai', finalHtml);
+            
+            // Atualiza ícones do botão novo
+            if(window.lucide) lucide.createIcons();
+            
+        } catch(e) {
+            document.getElementById(loadId).innerText = "Erro: " + e.message;
+            document.getElementById(loadId).style.color = "var(--danger)";
+        }
+        feed.scrollTo(0, feed.scrollHeight);
+    };
+
+    // --- PIN & EXPORT & CONFIG (IGUAIS) ---
+    let pinBuffer = "";
+    const enterPin = (n) => {
+        if (n === 'del') pinBuffer = pinBuffer.slice(0,-1);
+        else if (pinBuffer.length < 4) pinBuffer += n;
+
+        const dots = document.querySelectorAll('.pin-dot');
+        dots.forEach((d, i) => {
+            d.style.background = i < pinBuffer.length ? 'var(--accent)' : 'transparent';
+            d.style.borderColor = i < pinBuffer.length ? 'var(--accent)' : 'var(--text-secondary)';
+        });
+
+        if (pinBuffer.length === 4) {
+            setTimeout(() => {
+                if (pinBuffer === state.settings.pin) {
+                    state.unlocked = true;
+                    getEl('pin-overlay').classList.remove('locked');
+                    getEl('main-app').classList.add('loaded');
+                    pinBuffer = "";
+                    renderChart();
+                } else {
+                    getEl('pin-dots').classList.add('shake');
+                    showToast("PIN Incorreto", "error");
+                    pinBuffer = "";
+                    dots.forEach(d => { d.style.background='transparent'; d.style.borderColor='var(--text-secondary)'; });
+                }
+            }, 200);
+        }
+    };
+
+    const togglePinSetup = () => {
+        const chk = getEl('chk-pin');
+        if (chk.checked) {
+            const p1 = prompt("Crie um PIN de 4 números:");
+            if(!p1) { chk.checked = false; return; }
+            if (p1.length !== 4 || isNaN(p1)) { alert("Deve ter 4 números."); chk.checked = false; return; }
+            state.settings.pin = p1;
+            showToast("Proteção ativada!");
+        } else {
+            if(confirm("Remover proteção por PIN?")) {
+                state.settings.pin = null;
+                showToast("Proteção removida.");
+            } else {
+                chk.checked = true;
+            }
+        }
+    };
+
+    const exportPDF = () => {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.setFillColor(10, 132, 255);
+        doc.rect(0,0,210,30, 'F');
+        doc.setTextColor(255,255,255);
+        doc.setFontSize(20);
+        doc.text("Weigh Pro Relatório", 15, 20);
+        doc.setTextColor(0,0,0);
+        doc.setFontSize(10);
+        doc.text(`Gerado em ${new Date().toLocaleDateString()}`, 150, 20);
+
+        const data = state.entries.map(e => [
+            new Date(e.date+'T12:00:00').toLocaleDateString(),
+            e.weight + ' kg',
+            (e.weight - state.settings.goal).toFixed(1)
+        ]);
+
+        doc.autoTable({
+            head: [['Data', 'Peso', 'Dif. Meta']],
+            body: data,
+            startY: 40,
+            theme: 'grid',
+            headStyles: { fillColor: [10, 132, 255] }
+        });
+        doc.save('weigh_pro_history.pdf');
+    };
+
+    const nav = (view) => {
+        ['home','stats','ai'].forEach(v => {
+            getEl('view-'+v).classList.add('hidden');
+            getEl('nav-'+v).classList.remove('active');
+            getEl('d-nav-'+v).classList.remove('active');
+        });
+        getEl('view-'+view).classList.remove('hidden');
+        getEl('nav-'+view).classList.add('active');
+        getEl('d-nav-'+view).classList.add('active');
+        if(view === 'home') setTimeout(renderChart, 50);
+    };
+
+    const toggleSettings = () => {
+        const m = getEl('modal-settings');
+        const isOpen = m.classList.contains('active');
+        if (!isOpen) {
+            m.classList.add('active');
+            getEl('cfg-api').value = state.settings.apiKey;
+            getEl('cfg-goal').value = state.settings.goal;
+            getEl('cfg-height').value = state.settings.height;
+            getEl('chk-pin').checked = !!state.settings.pin;
+            getEl('cfg-model').value = state.settings.aiModel || 'gemini-2.5-flash';
+        } else {
+            m.classList.remove('active');
+        }
+    };
+
+    const saveSettings = () => {
+        state.settings.apiKey = getEl('cfg-api').value;
+        state.settings.goal = getEl('cfg-goal').value;
+        state.settings.height = getEl('cfg-height').value;
+        state.settings.aiModel = getEl('cfg-model').value;
+        touchState(); 
+        pushToCloud();
+        applyTheme(state.settings.theme);
+        toggleSettings();
+        render();
+        updateAIModelLabel();
+        showToast("Configurações salvas!");
+    };
+
+    const setTheme = (t) => { state.settings.theme = t; applyTheme(t); };
+    const applyTheme = (t) => { document.body.setAttribute('data-theme', t); if(state.chart) renderChart(); };
+
+    const setupUI = () => {
+        const tx = getEl('ai-input');
+
+        // 1. Auto-resize do Textarea
+        tx.addEventListener('input', function() {
+            this.style.height = 'auto'; // Reseta para calcular
+            this.style.height = (this.scrollHeight) + 'px'; // Define altura baseada no texto
+            
+            // Limita a altura máxima para não cobrir a tela toda (ex: 150px)
+            if(this.scrollHeight > 150) {
+                this.style.overflowY = "auto";
+            } else {
+                this.style.overflowY = "hidden";
+            }
+        });
+
+        // 2. Lógica do Enter
+        tx.addEventListener('keydown', (e) => {
+            // Se apertar APENAS Enter, ele pula linha (padrão do textarea)
+            // Se apertar CTRL + Enter (no PC), ele envia
+            if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault(); // Não pula linha
+                sendAI();
+            }
+        });
+        
+        // Prevent Mobile Safari rubber banding
+        document.body.addEventListener('touchmove', (e) => {
+             if(getEl('modal-settings').classList.contains('active')) return;
+        }, {passive: false});
+    };
+
+    let promptResolver = null;
+
+    const ask = (message, placeholder = "") => {
+        return new Promise((resolve) => {
+            const modal = getEl('modal-prompt');
+            const input = getEl('prompt-input');
+            const msgEl = getEl('prompt-msg');
+
+            msgEl.innerText = message;
+            input.value = "";
+            input.placeholder = placeholder;
+            
+            modal.classList.add('active');
+            input.focus();
+
+            promptResolver = resolve;
+
+            input.onkeydown = (e) => {
+                if(e.key === 'Enter') resolvePrompt(true);
+            };
+        });
+    };
+
+    const resolvePrompt = (status) => {
+        const modal = getEl('modal-prompt');
+        const input = getEl('prompt-input');
+        
+        modal.classList.remove('active');
+        
+        if (promptResolver) {
+            const result = status ? input.value : null;
+            promptResolver(result);
+            promptResolver = null;
+        }
+    };
+
+    const updateAIModelLabel = () => {
+        const el = getEl('ai-model-label');
+        if (!el) return;
+
+        const model = state.settings.aiModel || 'gemini-2.5-flash';
+        
+        if (model.includes('lite')) el.innerText = "Gemini 2.5 Flash Lite";
+        else if (model.includes('3')) el.innerText = "Gemini 3 Flash";
+        else el.innerText = "Gemini 2.5 Flash";
+    };
+
+    // --- FUNÇÕES DE NUTRIÇÃO ---
+    const toggleFoodModal = () => {
+        const m = getEl('modal-food');
+        m.classList.toggle('active');
+        if(m.classList.contains('active')) getEl('food-name').focus();
+    };
+
+    const saveFood = () => {
+        const name = getEl('food-name').value;
+        const kcal = parseFloat(getEl('food-kcal').value) || 0;
+        const prot = parseFloat(getEl('food-prot').value) || 0;
+
+        if(!name) return showToast("Digite um nome", "error");
+
+        const newFood = {
+            id: Date.now(),
+            date: new Date().toISOString().split('T')[0], // Salva a data de hoje (AAAA-MM-DD)
+            name, kcal, prot
+        };
+
+        state.foodLogs.unshift(newFood); // Adiciona no topo da lista
+        
+        // Limpa os campos
+        getEl('food-name').value = '';
+        getEl('food-kcal').value = '';
+        getEl('food-prot').value = '';
+        
+        toggleFoodModal();
+        renderFood();
+        touchState(); // Salva no local
+        pushToCloud(); // Salva no Firebase
+        showToast("Refeição salva!", "success");
+    };
+
+    const deleteFood = (id) => {
+        if(confirm("Apagar esta refeição?")) {
+            state.foodLogs = state.foodLogs.filter(f => f.id !== id);
+            renderFood();
+            touchState();
+            pushToCloud();
+        }
+    };
+
+    const renderFood = () => {
+        const list = getEl('food-list');
+        const today = new Date().toISOString().split('T')[0];
+        
+        const todaysMeals = (state.foodLogs || []).filter(f => f.date === today);
+        
+        const totalKcal = todaysMeals.reduce((acc, item) => acc + item.kcal, 0);
+        const elKcal = getEl('today-kcal');
+        if(elKcal) elKcal.innerText = totalKcal;
+
+        if(list) {
+            if (todaysMeals.length === 0) {
+                list.innerHTML = `<div style="text-align:center; font-size:12px; color:var(--text-secondary); padding:10px;">Nada registrado hoje.</div>`;
+            } else {
+                list.innerHTML = todaysMeals.map(f => `
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-elevated); padding:8px 12px; border-radius:10px; font-size:13px;">
+                        <div>
+                            <div style="font-weight:600;">${f.name}</div>
+                            <div style="font-size:11px; color:var(--text-secondary);">${f.kcal} kcal • ${f.prot}g prot</div>
+                        </div>
+                        <button onclick="app.deleteFood(${f.id})" style="background:none; border:none; color:var(--danger); cursor:pointer; padding:5px;">
+                            <i data-lucide="trash-2" width="14" height="14"></i>
+                        </button>
+                    </div>
+                `).join('');
+                if(window.lucide) lucide.createIcons();
+            }
+        }
+    };
+
+    const quickAddFood = (name, kcal, prot) => {
+        const newFood = {
+            id: Date.now(),
+            date: new Date().toISOString().split('T')[0],
+            name: name,
+            kcal: parseFloat(kcal),
+            prot: parseFloat(prot)
+        };
+
+        state.foodLogs.unshift(newFood);
+        
+        renderFood(); // Atualiza a lista na Home
+        touchState();
+        pushToCloud();
+        
+        showToast(`Salvo: ${name} (${kcal}kcal)`, "success");
+        
+        // Opcional: Leva o usuário de volta pra Home para ver
+        // app.nav('home'); 
+    };
+
+    return { 
+        init, addEntry, deleteEntry, renderChart, nav, toggleSettings, 
+        setTheme, saveSettings, aiPrompt, sendAI, exportPDF, enterPin, 
+        togglePinSetup, googleLogin, logout, handleImageUpload, clearImage, 
+        handleRangeChange, saveChat: (h) => { state.chatHistory = []; saveLocal(); },
+        ask, 
+        resolvePrompt,
+        toggleFoodModal, saveFood, deleteFood, quickAddFood
+    };
+})();
+
+document.addEventListener('DOMContentLoaded', App.init);
+window.app = App;
+</script>
