@@ -141,6 +141,9 @@
         .stat-big { font-size: 40px; font-weight: 800; letter-spacing: -1.5px; line-height: 1; }
         .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); font-weight: 700; display: block; margin-bottom: 8px; }
         
+        .input-border {
+            border: 1px solid var(--border); border-radius: 14px; padding: 2px; background: var(--accent); padding: 5px 5px 5px 5px;
+        }
         .modern-input { 
             width: 100%; height: 50px; background: var(--bg-elevated); 
             border: 1px solid transparent; border-radius: 14px; padding: 0 16px; 
@@ -406,9 +409,19 @@ main { order: 3; padding-bottom: 20px !important; }
                     </select>
                 </div>
                 
-                <div id="custom-date-container" class="hidden" style="display:flex; gap:10px; margin-bottom:15px; background:var(--bg-elevated); padding:10px; border-radius:12px;">
-                    <input type="date" id="date-start" class="modern-input" style="height:40px; font-size:13px;" onchange="app.renderChart()">
-                    <input type="date" id="date-end" class="modern-input" style="height:40px; font-size:13px;" onchange="app.renderChart()">
+                <div id="custom-date-container" class="hidden" style="display: grid; grid-template-columns: 1fr 1fr; /* Divide exatamente ao meio */gap: 12px; margin-bottom: 20px; animation: slideDown 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);">
+                    <div style="position: relative;">
+                        <div style="position: absolute; top: 8px; left: 14px; font-size: 10px; font-weight: 700; color: var(--accent); letter-spacing: 0.5px; pointer-events: none;">DE</div>
+                        <input type="date" id="date-start" class="modern-input" onchange="app.renderChart()"
+                            style="height: 56px; padding: 22px 14px 6px 14px; font-size: 14px; font-weight: 600; -webkit-appearance: none; appearance: none; background: var(--bg-elevated); width: 100%;">
+                    </div>
+
+                    <div style="position: relative;">
+                        <div style="position: absolute; top: 8px; left: 14px; font-size: 10px; font-weight: 700; color: var(--accent); letter-spacing: 0.5px; pointer-events: none;">ATÉ</div>
+                        
+                        <input type="date" id="date-end" class="modern-input" onchange="app.renderChart()"
+                            style="height: 56px; padding: 22px 14px 6px 14px; font-size: 14px; font-weight: 600; -webkit-appearance: none; appearance: none; background: var(--bg-elevated); width: 100%;">
+                    </div>
                 </div>
 
                 <div class="chart-container-box">
