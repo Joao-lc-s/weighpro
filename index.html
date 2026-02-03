@@ -274,9 +274,45 @@ main { order: 3; padding-bottom: 20px !important; }
         /* --- UTILS --- */
         .hidden { display: none !important; }
         .row { display: flex; justify-content: space-between; align-items: center; }
-        .chip-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
-        .action-chip { background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-primary); padding: 8px 16px; border-radius: 20px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s; color: var(--accent);}
-        .action-chip:hover { border-color: var(--accent); transform: translateY(-1px); }
+        .chip-grid {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            flex-wrap: nowrap;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+
+        .chip-grid::-webkit-scrollbar {
+            display: none;
+        }
+
+        .action-chip {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            color: var(--accent);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.2s;
+            
+            white-space: nowrap;
+            flex-shrink: 0;
+            height: auto;
+            margin: 0;
+        }
+
+        .action-chip:hover {
+            border-color: var(--accent);
+            transform: translateY(-1px);
+        }
 
         /* --- EMPTY STATE --- */
         .empty-state { text-align: center; padding: 40px 20px; color: var(--text-secondary); display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
@@ -435,7 +471,7 @@ main { order: 3; padding-bottom: 20px !important; }
                         <span>Sem dados suficientes para o gráfico.</span>
                     </div>
                 </div>
-                <div class="card" id="card-water">
+                <div class="card" style="height: 100%;" id="card-water">
                     <div class="row">
                         <span class="stat-label">Hidratação</span>
                         <span id="water-val" style="font-weight:700; color:var(--accent);">0 / 3000ml</span>
@@ -524,7 +560,7 @@ main { order: 3; padding-bottom: 20px !important; }
         </div>
 
         <div id="view-stats" class="dashboard-grid hidden">
-            <div class="card">
+            <div class="card" id="card-bmi">
                 <span class="stat-label">IMC Atual</span>
                 <div class="row">
                     <span class="stat-big" id="bmi-val">--</span>
@@ -541,7 +577,7 @@ main { order: 3; padding-bottom: 20px !important; }
                 </div>
             </div>
 
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;" class="col-full">
+            <div class="col-full" id="card-weekly-stats" style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
                 <div class="card">
                     <span class="stat-label">Média 7 Dias</span>
                     <span class="stat-big" id="stat-avg" style="font-size:32px;">--</span>
@@ -552,12 +588,12 @@ main { order: 3; padding-bottom: 20px !important; }
                 </div>
             </div>
             
-            <div class="card">
+            <div class="card" style="height: 100%;" id="card-total-loss">
                 <span class="stat-label">Total Perdido</span>
                 <span class="stat-big" style="color:var(--success)" id="total-loss">--</span>
             </div>
 
-            <div class="card col-full">
+            <div class="card col-full" id="card-projection">
                 <span class="stat-label">Projeção da Meta</span>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
                     <div>
@@ -574,7 +610,7 @@ main { order: 3; padding-bottom: 20px !important; }
                 </div>
             </div>
 
-            <div class="card col-full">
+            <div class="card col-full" id="card-history">
                 <div class="row" style="margin-bottom: 20px;">
                     <span class="stat-label" style="margin:0">Histórico Completo</span>
                     <button class="action-chip" onclick="app.exportPDF()"><i data-lucide="file-up" width="20" height="20"></i> PDF</button>
@@ -605,24 +641,12 @@ main { order: 3; padding-bottom: 20px !important; }
             <button class="btn-icon" onclick="app.toggleSettings()"><i data-lucide="x" width="20" height="20"></i></button>
         </div>
 
-        <span class="stat-label" style="color:var(--accent)">Tema</span>
+        <span class="stat-label" style="color:var(--text-secondary)">Tema</span>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:25px;">
-            
-            <button class="action-chip" onclick="app.setTheme('dark')">
-                <i data-lucide="moon-star" width="20" height="20"></i> Dark
-            </button>
-            
-            <button class="action-chip" onclick="app.setTheme('light')">
-                <i data-lucide="sun" width="20" height="20"></i> Light
-            </button>
-            
-            <button class="action-chip" onclick="app.setTheme('cyberpunk')">
-                <i data-lucide="bot" width="20" height="20"></i> Cyber
-            </button>
-            
-            <button class="action-chip" onclick="app.setTheme('forest')">
-                <i data-lucide="leaf" width="20" height="20"></i> Forest
-            </button>
+            <button class="action-chip" onclick="app.setTheme('dark')"><i data-lucide="moon-star" width="20" height="20"></i> Dark</button>
+            <button class="action-chip" onclick="app.setTheme('light')"><i data-lucide="sun" width="20" height="20"></i> Light</button>
+            <button class="action-chip" onclick="app.setTheme('cyberpunk')"><i data-lucide="bot" width="20" height="20"></i> Cyber</button>
+            <button class="action-chip" onclick="app.setTheme('forest')"><i data-lucide="leaf" width="20" height="20"></i> Forest</button>
         </div>
 
         <span class="stat-label">Gemini AI Key</span>
@@ -657,7 +681,6 @@ main { order: 3; padding-bottom: 20px !important; }
         
         <span class="stat-label">Nuvem</span>
         <div id="firebase-ui-area" style="margin-bottom:25px; padding:15px; border:1px solid var(--border); border-radius:16px; background: var(--bg-elevated);">
-            
             <div class="row">
                 <button class="action-chip" onclick="app.googleLogin()" style="border:none; background: var(--bg-card); box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
                     <i class="ph-bold ph-google-logo"></i> Entrar
@@ -669,22 +692,21 @@ main { order: 3; padding-bottom: 20px !important; }
             <div id="user-status" style="font-size:12px; margin-top:10px; color:var(--text-secondary); display:flex; align-items:center; gap:5px;">
                 <i data-lucide="circle" width="10" height="10"></i> Offline
             </div>
-                <div class="row" style="margin-bottom: 5px; background:var(--bg-elevated); padding-left:15px; border-radius:16px; padding-top: 15px;">
-                    <div style="display:flex; flex-direction:column;">
-                        <span style="font-size:14px; font-weight: 500;">Desativar sincronização</span>
-                        <span style="font-size:11px; color:var(--text-secondary);">Recebe dados da nuvem, mas não envia alterações.</span>
-                    </div>
-                    <label style="position: relative; display: inline-block; width: 50px; height: 28px;">
-                        <input type="checkbox" id="chk-readonly" style="opacity: 0; width: 0; height: 0;">
-                        <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--bg-body); transition: .4s; border-radius: 34px; border: 1px solid var(--border);"></span>
-                        <span style="position: absolute; content: ''; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2);"></span>
-                    </label>
+            <div class="row" style="margin-bottom: 5px; background:var(--bg-elevated); padding-left:15px; border-radius:16px; padding-top: 15px;">
+                <div style="display:flex; flex-direction:column;">
+                    <span style="font-size:14px; font-weight: 500;">Desativar sincronização</span>
+                    <span style="font-size:11px; color:var(--text-secondary);">Recebe dados, mas não envia alterações.</span>
                 </div>
-
-                <style>
-                    #chk-readonly:checked + span { background-color: var(--accent); }
-                    #chk-readonly:checked + span + span { transform: translateX(20px); }
-                </style>
+                <label style="position: relative; display: inline-block; width: 50px; height: 28px;">
+                    <input type="checkbox" id="chk-readonly" style="opacity: 0; width: 0; height: 0;">
+                    <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--bg-body); transition: .4s; border-radius: 34px; border: 1px solid var(--border);"></span>
+                    <span style="position: absolute; content: ''; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2);"></span>
+                </label>
+            </div>
+            <style>
+                #chk-readonly:checked + span { background-color: var(--accent); }
+                #chk-readonly:checked + span + span { transform: translateX(20px); }
+            </style>
         </div>
 
         <span class="stat-label">Metas Corporais</span>
@@ -694,7 +716,6 @@ main { order: 3; padding-bottom: 20px !important; }
         </div>
 
         <div style="margin-top: 20px; border-top: 1px solid var(--border); padding-top: 20px;">
-            <span class="stat-label">Personalização</span>
             <button class="btn-primary" onclick="app.openLayoutEditorMode()" style="background: var(--bg-elevated); color: var(--text-primary); border: 1px solid var(--border);">
                 <i data-lucide="layout" width="18" height="18"></i> 
                 Editar Posição dos Cards
@@ -777,120 +798,127 @@ main { order: 3; padding-bottom: 20px !important; }
         </div>
 </div>
 <script>
-const App = (() => {
-    // --- STATE ---
-    let state = {
-        entries: [],
-        foodLogs: [],
-        chatHistory: [],
-        aiUsage: { count: 0, date: '' },
-        water: { current: 0, target: 3000, date: '' },
-        settings: { 
-            theme: 'dark', 
-            goal: 70, 
-            height: 175, 
-            apiKey: '', 
-            pin: null, 
-            firebaseConfig: '',
-            aiModel: 'gemini-2.5-flash',
-            readOnly: false
-        },
-        updatedAt: new Date(0).toISOString(),
-        user: null,
-        chart: null,
-        currentImageBase64: null,
-        unlocked: false
-
-        
-    };
-
-    let auth, db;
-
-    // --- HELPERS ---
-    const getEl = (id) => document.getElementById(id);
-    const showToast = (msg, type='info') => {
-        const c = getEl('toast-container');
-        const t = document.createElement('div');
-        t.className = 'toast';
-        let icon = type === 'success' ? 'check-circle' : (type === 'error' ? 'warning-circle' : 'info');
-        let color = type === 'success' ? 'var(--success)' : (type === 'error' ? 'var(--danger)' : 'var(--accent)');
-        t.innerHTML = `<i class="ph-fill ph-${icon}" style="color:${color}; font-size: 18px;"></i> ${msg}`;
-        c.appendChild(t);
-        setTimeout(() => {
-            t.style.opacity = '0';
-            t.style.transform = 'translateY(-40px)';
-            setTimeout(() => t.remove(), 300);
-        }, 3000);
-    };
-
-    // --- INIT ---
-    const init = async () => {
-        loadLocal();
-        updateAIModelLabel();
-        renderWater();
-        renderMacros();
-        initLayout();
-
-        if (state.settings.firebaseConfig) {
-            tryInitFirebase(JSON.parse(state.settings.firebaseConfig));
-        }
-
-        if (state.settings.pin && !state.unlocked) {
-            getEl('pin-overlay').classList.add('locked');
-        } else {
-            getEl('main-app').classList.add('loaded');
-        }
-
-        const setupUI = () => {
-            const tx = getEl('ai-input');
-
-            if(tx) {
-                tx.addEventListener('input', function() {
-                    this.style.height = 'auto';
-                    this.style.height = (this.scrollHeight) + 'px';
-                    if(this.scrollHeight > 150) this.style.overflowY = "auto";
-                    else this.style.overflowY = "hidden";
-                });
-
-                tx.addEventListener('keydown', (e) => {
-                    if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                        e.preventDefault();
-                        sendAI();
-                    }
-                });
-            }
-            
-            const inputs = document.querySelectorAll('input, textarea');
-            const nav = document.querySelector('.bottom-nav');
-            
-            inputs.forEach(inp => {
-                inp.addEventListener('focus', () => {
-                    if(window.innerWidth < 768 && nav) nav.style.display = 'none';
-                });
-                
-                inp.addEventListener('blur', () => {
-                    setTimeout(() => {
-                        if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
-                            if(nav) nav.style.display = 'flex';
-                        }
-                    }, 200);
-                });
-            });
-
-            document.body.addEventListener('touchmove', (e) => {
-                if(getEl('modal-settings').classList.contains('active')) return;
-            }, {passive: false});
+    const App = (() => {
+        // --- STATE ---
+        let state = {
+            entries: [],
+            foodLogs: [],
+            chatHistory: [],
+            aiUsage: { count: 0, date: '' },
+            water: { current: 0, target: 3000, date: '' },
+            settings: { 
+                theme: 'dark', 
+                goal: 70, 
+                height: 175, 
+                apiKey: '', 
+                pin: null, 
+                firebaseConfig: '',
+                aiModel: 'gemini-2.5-flash',
+                readOnly: false,
+                layout: [],  
+                layoutHome: [],
+                layoutStats: []
+            },
+            editingTab: 'home',
+            updatedAt: new Date(0).toISOString(),
+            user: null,
+            chart: null,
+            currentImageBase64: null,
+            unlocked: false
         };
-        
-        setupUI();
-        
-        lucide.createIcons();
-        render();
-        
-        if(state.chatHistory.length > 0) renderChatHistory();
-    };
 
-    const loadLocal = () => {
+        let auth, db;
+
+        // --- HELPERS ---
+        const getEl = (id) => document.getElementById(id);
+        const showToast = (msg, type='info') => {
+            const c = getEl('toast-container');
+            const t = document.createElement('div');
+            t.className = 'toast';
+            let icon = type === 'success' ? 'check-circle' : (type === 'error' ? 'warning-circle' : 'info');
+            let color = type === 'success' ? 'var(--success)' : (type === 'error' ? 'var(--danger)' : 'var(--accent)');
+            t.innerHTML = `<i class="ph-fill ph-${icon}" style="color:${color}; font-size: 18px;"></i> ${msg}`;
+            c.appendChild(t);
+            setTimeout(() => {
+                t.style.opacity = '0';
+                t.style.transform = 'translateY(-40px)';
+                setTimeout(() => t.remove(), 300);
+            }, 3000);
+        };
+
+        // --- INIT ---
+        const init = async () => {
+            loadLocal();
+            updateAIModelLabel();
+            renderWater();
+            renderMacros();
+            initLayout();
+
+            if (state.settings.firebaseConfig) {
+                tryInitFirebase(JSON.parse(state.settings.firebaseConfig));
+            }
+
+            if (state.settings.pin && !state.unlocked) {
+                getEl('pin-overlay').classList.add('locked');
+            } else {
+                getEl('main-app').classList.add('loaded');
+            }
+
+            // --- CORREÇÃO: SetupUI unificado e movido para dentro do init ---
+            const setupUI = () => {
+                const tx = getEl('ai-input');
+                const nav = document.querySelector('.bottom-nav');
+
+                if(tx) {
+                    const autoResize = () => {
+                        tx.style.height = 'auto'; 
+                        tx.style.height = (tx.scrollHeight) + 'px'; 
+                        if(tx.scrollHeight > 150) tx.style.overflowY = "auto";
+                        else tx.style.overflowY = "hidden";
+                    };
+
+                    tx.addEventListener('input', autoResize);
+                    // Correção para colar texto
+                    tx.addEventListener('paste', () => setTimeout(autoResize, 10));
+                    
+                    tx.addEventListener('keydown', (e) => {
+                        if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                            e.preventDefault();
+                            sendAI();
+                        }
+                    });
+                }
+                
+                const inputs = document.querySelectorAll('input, textarea');
+                inputs.forEach(inp => {
+                    inp.addEventListener('focus', () => {
+                        if(window.innerWidth < 768 && nav) nav.style.display = 'none';
+                    });
+                    
+                    inp.addEventListener('blur', () => {
+                        setTimeout(() => {
+                            // Verifica se o foco não foi para outro input
+                            if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                                if(nav) nav.style.display = 'flex';
+                            }
+                        }, 200);
+                    });
+                });
+
+                document.body.addEventListener('touchmove', (e) => {
+                    if(getEl('modal-settings').classList.contains('active')) return;
+                }, {passive: false});
+            };
+            
+            setupUI();
+            
+            if(window.lucide) lucide.createIcons();
+            render();
+            
+            if(state.chatHistory.length > 0) renderChatHistory();
+        };
+
+        const loadLocal = () => {
         try {
             const d = localStorage.getItem('wp_data');
             if (d) {
@@ -898,22 +926,24 @@ const App = (() => {
                 const today = new Date().toISOString().split('T')[0];
 
                 if (Array.isArray(parsed)) {
+                    // Migração de versões antigas
                     state.entries = parsed;
                     state.aiUsage = { count: 0, date: today };
                 } else {
-
+                    // Carregamento padrão
                     state.entries = parsed.entries || [];
                     state.chatHistory = parsed.chatHistory || [];
-                    state.foodLogs = parsed.foodLogs || [];
+                    state.foodLogs = parsed.foodLogs || []; // Carrega comidas
                     state.updatedAt = parsed.updatedAt || new Date(0).toISOString();
                     
-                    const savedUsage = parsed.aiUsage || { count: 0, date: '' };
+                    // Carrega Água ou inicia zerada
+                    state.water = parsed.water || { current: 0, target: 3000, date: today };
+                    
+                    // Valida data do contador de IA e Água
+                    if (state.aiUsage && state.aiUsage.date !== today) state.aiUsage = { count: 0, date: today };
+                    else state.aiUsage = parsed.aiUsage || { count: 0, date: today };
 
-                    if (savedUsage.date !== today) {
-                        state.aiUsage = { count: 0, date: today };
-                    } else {
-                        state.aiUsage = savedUsage;
-                    }
+                    if (state.water.date !== today) state.water = { current: 0, target: 3000, date: today };
                 }
             } else {
                 state.aiUsage = { count: 0, date: new Date().toISOString().split('T')[0] };
@@ -926,1164 +956,1049 @@ const App = (() => {
                 if(e.date.includes('T')) e.date = e.date.split('T')[0];
             });
 
-            getEl('inp-date').value = new Date().toISOString().split('T')[0];
+            applyTheme(state.settings.theme);
+            if(getEl('inp-date')) getEl('inp-date').value = new Date().toISOString().split('T')[0];
         } catch(e) { console.error("Erro load", e); }
     };
 
-    const saveLocal = () => {
-        // Agora salvamos tudo num objeto estruturado com data
-        const dataToSave = {
-            entries: state.entries,
-            chatHistory: state.chatHistory,
-            updatedAt: state.updatedAt,
-            aiUsage: state.aiUsage
+        const saveLocal = () => {
+            const dataToSave = {
+                entries: state.entries,
+                chatHistory: state.chatHistory,
+                foodLogs: state.foodLogs,
+                updatedAt: state.updatedAt,
+                water: state.water,
+                aiUsage: state.aiUsage
+
+            };
+            localStorage.setItem('wp_data', JSON.stringify(dataToSave));
+            localStorage.setItem('wp_settings', JSON.stringify(state.settings));
         };
-        localStorage.setItem('wp_data', JSON.stringify(dataToSave));
-        localStorage.setItem('wp_settings', JSON.stringify(state.settings));
-    };
 
-    const touchState = () => {
-        state.updatedAt = new Date().toISOString();
-        saveLocal();
-    };
+        const touchState = () => {
+            state.updatedAt = new Date().toISOString();
+            saveLocal();
+        };
 
-    // --- FIREBASE ---
-    const tryInitFirebase = (config) => {
-        try {
-            const { initializeApp, getAuth, onAuthStateChanged, getFirestore } = window.firebaseModules;
-            const fbApp = initializeApp(config);
-            auth = getAuth(fbApp);
-            db = getFirestore(fbApp);
+        // --- FIREBASE ---
+        const tryInitFirebase = (config) => {
+            // --- CORREÇÃO: Verificar se os módulos já carregaram ---
+            if (!window.firebaseModules) {
+                console.warn("Módulos Firebase ainda não carregados.");
+                return;
+            }
+            try {
+                const { initializeApp, getAuth, onAuthStateChanged, getFirestore } = window.firebaseModules;
+                // Evita reinicializar se já existe
+                if (!auth) {
+                    const fbApp = initializeApp(config);
+                    auth = getAuth(fbApp);
+                    db = getFirestore(fbApp);
 
-            onAuthStateChanged(auth, (user) => {
-                state.user = user;
-                const st = getEl('user-status');
-                if (user) {
-                    st.innerHTML = `<i class="ph-fill ph-check-circle" style="color:var(--success)"></i> ${user.email}`;
-                    syncData(); 
-                } else {
-                    st.innerHTML = `<i class="ph-fill ph-warning-circle" style="color:var(--danger)"></i> Desconectado`;
+                    onAuthStateChanged(auth, (user) => {
+                        state.user = user;
+                        const st = getEl('user-status');
+                        if (user) {
+                            st.innerHTML = `<i class="ph-fill ph-check-circle" style="color:var(--success)"></i> ${user.email}`;
+                            syncData(); 
+                        } else {
+                            st.innerHTML = `<i class="ph-fill ph-warning-circle" style="color:var(--danger)"></i> Desconectado`;
+                        }
+                    });
                 }
-            });
-        } catch (e) {
-            console.warn("Firebase Init Fail", e);
-        }
-    };
+            } catch (e) {
+                console.warn("Firebase Init Fail", e);
+            }
+        };
 
-    const googleLogin = async () => {
-        if (!auth) {
-            const rawConfig = '{"apiKey": "AIzaSyBX-gqsBc2DT4qJcqvfmuZij9VPwvCaa4w", "authDomain": "weigh-pro.firebaseapp.com", "projectId": "weigh-pro", "storageBucket": "weigh-pro.firebasestorage.app", "messagingSenderId": "165706164239", "appId": "1:165706164239:web:3e85f466d29029608d1b7a", "measurementId": "G-H17Q1C1VRK"}'
-            if (rawConfig && rawConfig.trim() !== '') {
-                try {
-                    tryInitFirebase(JSON.parse(rawConfig));
-                    state.settings.firebaseConfig = rawConfig;
-                    saveSettings(); 
-                } catch(e) {
-                    return showToast("JSON inválido. Cole apenas o objeto {...}", "error");
+        const googleLogin = async () => {
+            // Fallback config padrão
+            const rawConfig = '{"apiKey": "AIzaSyBX-gqsBc2DT4qJcqvfmuZij9VPwvCaa4w", "authDomain": "weigh-pro.firebaseapp.com", "projectId": "weigh-pro", "storageBucket": "weigh-pro.firebasestorage.app", "messagingSenderId": "165706164239", "appId": "1:165706164239:web:3e85f466d29029608d1b7a", "measurementId": "G-H17Q1C1VRK"}';
+            
+            if (!auth) {
+                if (rawConfig) {
+                    try {
+                        tryInitFirebase(JSON.parse(rawConfig));
+                        state.settings.firebaseConfig = rawConfig;
+                        saveSettings(); 
+                    } catch(e) {
+                        return showToast("Erro config Firebase", "error");
+                    }
                 }
             }
-        }
-        if (!auth) return showToast("Cole o JSON e Salve.", "error");
-        const { signInWithPopup, GoogleAuthProvider } = window.firebaseModules;
-        try { 
-            await signInWithPopup(auth, new GoogleAuthProvider()); 
-            showToast("Login realizado!", "success");
-        } catch(e) { showToast("Erro: " + e.message, "error"); }
-    };
-    
-    const logout = async () => {
-        if(!auth) return;
-        const { signOut } = window.firebaseModules;
-        await signOut(auth);
-        state.user = null;
-        showToast("Desconectado.");
-    };
-
-    // --- NOVA LÓGICA DE SINCRONIZAÇÃO (CORREÇÃO DE BUGS) ---
-    const syncData = async () => {
-        if (!state.user || !db) return;
-        const { doc, getDoc, setDoc } = window.firebaseModules;
-        const userRef = doc(db, 'users', state.user.uid);
+            
+            if (!auth || !window.firebaseModules) return showToast("Firebase não inicializado.", "error");
+            
+            const { signInWithPopup, GoogleAuthProvider } = window.firebaseModules;
+            try { 
+                await signInWithPopup(auth, new GoogleAuthProvider()); 
+                showToast("Login realizado!", "success");
+            } catch(e) { showToast("Erro: " + e.message, "error"); }
+        };
         
-        try {
-            const snap = await getDoc(userRef);
-            if (snap.exists()) {
-                const cloud = snap.data();
-                
-                const localDate = new Date(state.updatedAt).getTime();
-                const cloudDate = new Date(cloud.updatedAt || 0).getTime();
+        const logout = async () => {
+            if(!auth) return;
+            const { signOut } = window.firebaseModules;
+            await signOut(auth);
+            state.user = null;
+            showToast("Desconectado.");
+        };
 
-                const cloudHasData = (cloud.entries && cloud.entries.length > 0);
-                const localIsEmpty = (state.entries.length === 0);
+        const syncData = async () => {
+            if (!state.user || !db) return;
+            const { doc, getDoc, setDoc } = window.firebaseModules;
+            const userRef = doc(db, 'users', state.user.uid);
+            
+            try {
+                const snap = await getDoc(userRef);
+                if (snap.exists()) {
+                    const cloud = snap.data();
+                    const localDate = new Date(state.updatedAt).getTime();
+                    const cloudDate = new Date(cloud.updatedAt || 0).getTime();
 
-                if (localIsEmpty && cloudHasData) {
-                    console.log("Proteção ativada: Baixando dados da nuvem para dispositivo vazio.");
-                    applyCloudData(cloud);
-                    return;
-                }
+                    // Prioriza nuvem se local estiver vazio
+                    const localIsEmpty = (state.entries.length === 0);
+                    if (localIsEmpty && cloud.entries && cloud.entries.length > 0) {
+                        applyCloudData(cloud);
+                        return;
+                    }
 
-                if (cloudDate > localDate) {
-                    applyCloudData(cloud);
-                } else if (localDate > cloudDate) {
+                    if (cloudDate > localDate) {
+                        applyCloudData(cloud);
+                    } else if (localDate > cloudDate) {
+                        pushToCloud();
+                    }
+                } else {
                     pushToCloud();
                 }
-            } else {
-                pushToCloud();
-            }
-        } catch(e) { console.error("Erro sync", e); }
-    };
+            } catch(e) { console.error("Erro sync", e); }
+        };
 
-    const applyCloudData = (cloud) => {
-        state.entries = cloud.entries || [];
-        state.chatHistory = cloud.chatHistory || [];
-        state.foodLogs = cloud.foodLogs || [];
-        state.settings = { ...state.settings, ...cloud.settings };
-        
-        state.updatedAt = cloud.updatedAt;
-        const cloudUsage = cloud.aiUsage || { count: 0, date: '' };
-        const today = new Date().toISOString().split('T')[0];
+        const applyCloudData = (cloud) => {
+            state.entries = cloud.entries || [];
+            state.chatHistory = cloud.chatHistory || [];
+            state.foodLogs = cloud.foodLogs || [];
+            state.settings = { ...state.settings, ...cloud.settings };
+            state.updatedAt = cloud.updatedAt;
+            
+            const cloudUsage = cloud.aiUsage || { count: 0, date: '' };
+            const today = new Date().toISOString().split('T')[0];
+            if (cloudUsage.date === today) state.aiUsage = cloudUsage;
+            else state.aiUsage = { count: 0, date: today };
 
-        if (cloudUsage.date === today) {
-            state.aiUsage = cloudUsage;
-        } else {
-            state.aiUsage = { count: 0, date: today };
-        }
+            saveLocal();
+            render();
+            if(state.chatHistory.length > 0) renderChatHistory();
+            renderFood(); 
+            applyTheme(state.settings.theme); // Reaplica tema da nuvem
+            showToast("Dados sincronizados.");
+        };
 
-        saveLocal();
-        render();
-        if(state.chatHistory.length > 0) renderChatHistory();
-        if(typeof renderFood === 'function') renderFood();
-        showToast("Dados sincronizados.");
-    };
+        const pushToCloud = async () => {
+            if (state.settings.readOnly) return;
+            if (!state.user || !db) return;
+            const { doc, setDoc } = window.firebaseModules;
+            
+            await setDoc(doc(db, 'users', state.user.uid), { 
+                entries: state.entries, 
+                chatHistory: state.chatHistory,
+                foodLogs: state.foodLogs,
+                settings: state.settings,
+                updatedAt: state.updatedAt,
+                aiUsage: state.aiUsage
+            }, { merge: true });
+        };
 
-    const pushToCloud = async () => {
-        if (state.settings.readOnly) {
-            console.log("Modo Espectador: Envio para nuvem bloqueado.");
-            return;
-        }
+        // --- CORE ---
+        const addEntry = () => {
+            let rawInput = getEl('inp-weight').value;
+            const d = getEl('inp-date').value;
+            rawInput = rawInput.replace(',', '.');
+            const w = parseFloat(rawInput);
+            
+            if (!w || w <= 0 || w > 500) return showToast("Peso inválido.", "error");
+            if (!d) return showToast("Data inválida.", "error");
 
-        if (!state.user || !db) return;
-        const { doc, setDoc } = window.firebaseModules;
-        
-        await setDoc(doc(db, 'users', state.user.uid), { 
-            entries: state.entries, 
-            chatHistory: state.chatHistory,
-            settings: state.settings,
-            updatedAt: state.updatedAt,
-            aiUsage: state.aiUsage || { count: 0, date: new Date().toISOString().split('T')[0] }
-        }, { merge: true });
-    };
-
-    // --- CORE ---
-    const addEntry = () => {
-        let rawInput = getEl('inp-weight').value;
-        const d = getEl('inp-date').value;
-
-        // Correção iOS
-        rawInput = rawInput.replace(',', '.');
-        const w = parseFloat(rawInput);
-        
-        if (!w || w <= 0 || w > 500) return showToast("Peso inválido.", "error");
-        if (!d) return showToast("Data inválida.", "error");
-
-        state.entries.push({ id: Date.now(), weight: w, date: d });
-        state.entries.sort((a,b) => b.date.localeCompare(a.date));
-        
-        touchState(); // Atualiza data
-        pushToCloud(); // Sincroniza
-        render();
-        
-        getEl('inp-weight').value = '';
-        showToast("Peso registrado!", "success");
-    };
-
-    const deleteEntry = (id) => {
-        if(confirm("Excluir este registro?")) {
-            state.entries = state.entries.filter(e => e.id !== id);
-            touchState(); // IMPORTANTE: Atualiza data para a nuvem saber que mudou
+            state.entries.push({ id: Date.now(), weight: w, date: d });
+            state.entries.sort((a,b) => b.date.localeCompare(a.date));
+            
+            touchState();
             pushToCloud();
             render();
-            showToast("Registro removido.");
-        }
-    };
-
-    // --- RENDER ---
-    const render = () => {
-        const empty = state.entries.length === 0;
-        
-        if (empty) {
-            getEl('val-current').innerText = "--";
-            getEl('txt-start').innerText = "Início: --";
-            getEl('trend-pill').innerText = "--";
-            getEl('bar-progress').style.width = "0%";
-            getEl('smart-prediction').innerText = "";
-            renderChart(); 
-            getEl('history-list').innerHTML = `<div class="empty-state"><i class="ph ph-clipboard-text"></i>Sem registros ainda.</div>`;
             
-            if (state.entries.length >= 2) {
-                const start = state.entries[state.entries.length-1].weight;
-                const current = state.entries[0].weight;
-                const lost = start - current;
-                const percent = (lost / start) * 100;
+            getEl('inp-weight').value = '';
+            showToast("Peso registrado!", "success");
+        };
+
+        const deleteEntry = (id) => {
+            if(confirm("Excluir este registro?")) {
+                state.entries = state.entries.filter(e => e.id !== id);
+                touchState();
+                pushToCloud();
+                render();
+                showToast("Registro removido.");
+            }
+        };
+
+        // --- RENDER ---
+        const render = () => {
+            const empty = state.entries.length === 0;
+            
+            if (empty) {
+                getEl('val-current').innerText = "--";
+                getEl('txt-start').innerText = "Início: --";
+                getEl('trend-pill').innerText = "--";
+                getEl('bar-progress').style.width = "0%";
+                getEl('smart-prediction').innerText = "";
+                renderChart(); 
+                getEl('history-list').innerHTML = `<div class="empty-state"><i class="ph ph-clipboard-text"></i>Sem registros ainda.</div>`;
+                return;
+            }
+
+            const current = state.entries[0];
+            const start = state.entries[state.entries.length - 1];
+            const goal = parseFloat(state.settings.goal) || 70;
+
+            getEl('val-current').innerText = current.weight.toFixed(1);
+            getEl('txt-start').innerText = `Início: ${start.weight}kg`;
+            getEl('txt-goal').innerText = `Meta: ${goal}kg`;
+
+            const totalDist = Math.abs(start.weight - goal);
+            let pct = 0;
+            const isLoss = start.weight > goal;
+            
+            if (start.weight !== goal) {
+                if (isLoss) pct = (start.weight - current.weight) / (start.weight - goal) * 100;
+                else pct = (current.weight - start.weight) / (goal - start.weight) * 100;
+            }
+            
+            pct = Math.min(100, Math.max(0, pct));
+            getEl('bar-progress').style.width = `${pct}%`;
+
+            // Trend Pill
+            if (state.entries.length > 1) {
+                const prev = state.entries[1];
+                const diff = current.weight - prev.weight;
+                const trendEl = getEl('trend-pill');
+                if (Math.abs(diff) < 0.1) {
+                    trendEl.style.color = 'var(--text-secondary)';
+                    trendEl.innerHTML = `= Estável`;
+                } else if (diff < 0) {
+                    trendEl.style.color = 'var(--success)';
+                    trendEl.innerHTML = `<i data-lucide="trending-up" width="20" height="20"></i> ${diff.toFixed(1)}kg`;
+                } else {
+                    trendEl.style.color = 'var(--danger)';
+                    trendEl.innerHTML = `<i data-lucide="trending-down" width="20" height="20"></i> +${diff.toFixed(1)}kg`;
+                }
                 
+                // Percent Pill
+                const lostTotal = start.weight - current.weight;
+                const percentTotal = (lostTotal / start.weight) * 100;
                 const elPerc = document.getElementById('loss-percent');
                 if(elPerc) {
                     elPerc.style.opacity = '1';
-                    if(lost > 0) {
-                        elPerc.innerText = `↓ ${percent.toFixed(1)}% do peso inicial`;
+                    if(lostTotal > 0) {
+                        elPerc.innerText = `↓ ${percentTotal.toFixed(1)}% do peso inicial`;
                         elPerc.style.color = 'var(--success)';
                     } else {
-                        elPerc.innerText = `↑ ${Math.abs(percent).toFixed(1)}% ganhou`;
+                        elPerc.innerText = `↑ ${Math.abs(percentTotal).toFixed(1)}% ganhou`;
                         elPerc.style.color = 'var(--danger)';
                     }
                 }
             }
-            
-            return;
-        }
 
-        const current = state.entries[0];
-        const start = state.entries[state.entries.length - 1];
-        const goal = parseFloat(state.settings.goal) || 70;
-
-        getEl('val-current').innerText = current.weight.toFixed(1);
-        getEl('txt-start').innerText = `Início: ${start.weight}kg`;
-        getEl('txt-goal').innerText = `Meta: ${goal}kg`;
-
-        const totalDist = Math.abs(start.weight - goal);
-        let pct = 0;
-        const isLoss = start.weight > goal;
-        if (isLoss) {
-             pct = (start.weight - current.weight) / (start.weight - goal) * 100;
-        } else {
-             pct = (current.weight - start.weight) / (goal - start.weight) * 100;
-        }
-        
-        pct = Math.min(100, Math.max(0, pct));
-        getEl('bar-progress').style.width = `${pct}%`;
-
-        if (state.entries.length > 1) {
-            const prev = state.entries[1];
-            const diff = current.weight - prev.weight;
-            const trendEl = getEl('trend-pill');
-            if (Math.abs(diff) < 0.1) {
-                trendEl.style.color = 'var(--text-secondary)';
-                trendEl.innerHTML = `= Estável`;
-            } else if (diff < 0) {
-                trendEl.style.color = 'var(--success)';
-                trendEl.innerHTML = `<i data-lucide="trending-up" width="20" height="20"></i> ${diff.toFixed(1)}kg`;
-            } else {
-                trendEl.style.color = 'var(--danger)';
-                trendEl.innerHTML = `<i data-lucide="trending-down" width="20" height="20"></i> +${diff.toFixed(1)}kg`;
-            }
-        }
-
-        renderStats(current, start, goal);
-        renderHistory();
-        renderChart();
-    };
-
-    const renderStats = (current, start, goal) => {
-        const h = (parseFloat(state.settings.height) || 170) / 100;
-        const bmi = current.weight / (h * h);
-        getEl('bmi-val').innerText = bmi.toFixed(1);
-        
-        let label = "Normal", pos = 33, color = "var(--success)";
-        if (bmi < 18.5) { label="Abaixo"; pos=10; color="#64D2FF"; }
-        else if (bmi >= 25 && bmi < 30) { label="Sobrepeso"; pos=70; color="#FFD60A"; }
-        else if (bmi >= 30) { label="Obesidade"; pos=95; color="#FF453A"; }
-        
-        const badge = getEl('bmi-label');
-        badge.innerText = label;
-        badge.style.color = color;
-        badge.style.background = color + '22'; 
-        getEl('bmi-marker').style.left = `${pos}%`;
-
-        getEl('total-loss').innerText = (start.weight - current.weight).toFixed(1) + "kg";
-        if(start.weight < current.weight) getEl('total-loss').style.color = 'var(--danger)';
-
-        const recentEntries = state.entries.filter(e => {
-            const d = new Date(e.date);
-            const now = new Date();
-            return (now - d) / (1000 * 3600 * 24) <= 30;
-        });
-
-        if (recentEntries.length >= 2) {
-            const first = recentEntries[recentEntries.length-1];
-            const last = recentEntries[0];
-            const days = (new Date(last.date) - new Date(first.date)) / (1000 * 3600 * 24);
-            const loss = first.weight - last.weight;
-            
-            if (days > 0) {
-                const ratePerDay = loss / days;
-                const rateWeek = ratePerDay * 7;
-                
-                getEl('stat-rate').innerText = (rateWeek > 0 ? '-' : '+') + Math.abs(rateWeek).toFixed(1) + "kg";
-                getEl('stat-rate').style.color = rateWeek > 0 ? 'var(--success)' : 'var(--danger)';
-
-                const remaining = current.weight - goal;
-                if (remaining > 0 && ratePerDay > 0) {
-                    const daysLeft = remaining / ratePerDay;
-                    const date = new Date();
-                    date.setDate(date.getDate() + daysLeft);
-                    
-                    getEl('proj-remaining').innerText = remaining.toFixed(1) + "kg";
-                    getEl('proj-date').innerText = date.toLocaleDateString('pt-BR', {day:'numeric', month:'short'});
-                    getEl('smart-prediction').innerText = `✨ Previsão: ${date.toLocaleDateString()}`;
-                } else {
-                    getEl('proj-remaining').innerText = "--"; 
-                    getEl('proj-date').innerText = "--";
-                    getEl('smart-prediction').innerText = "Continue firme.";
-                }
-            }
-        }
-
-        const weekEntries = state.entries.slice(0, 7);
-        const avg = weekEntries.reduce((a,b) => a + b.weight, 0) / weekEntries.length;
-        getEl('stat-avg').innerText = avg.toFixed(1) + "kg";
-    };
-
-    const renderHistory = () => {
-        const list = getEl('history-list');
-        
-        list.innerHTML = state.entries.map(e => {
-            const dateObj = new Date(e.date + 'T12:00:00'); 
-            return `
-            <div style="display:flex; justify-content:space-between; padding:16px; background:var(--bg-elevated); border-radius:16px; align-items:center;">
-                <div>
-                    <strong style="font-size:17px;">${e.weight}kg</strong>
-                    <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">
-                        ${dateObj.toLocaleDateString('pt-BR', {weekday: 'short', day:'2-digit', month:'long'})}
-                    </div>
-                </div>
-                <button onclick="app.deleteEntry(${e.id})" class="btn-icon" style="width:32px; height:32px; color:var(--danger); background:transparent;">
-                    <i data-lucide="trash-2" width="15" height="15"></i>
-                </button>
-            </div>
-            `;
-        }).join('');
-
-        if(window.lucide) lucide.createIcons();
-    };
-
-    const renderChart = () => {
-        const ctx = getEl('mainChart').getContext('2d');
-        const emptyEl = getEl('chart-empty');
-        const canvas = getEl('mainChart');
-
-        if (state.chart) { state.chart.destroy(); state.chart = null; }
-
-        if (state.entries.length < 2) {
-            canvas.classList.add('hidden');
-            emptyEl.classList.remove('hidden');
-            return;
-        }
-
-        canvas.classList.remove('hidden');
-        emptyEl.classList.add('hidden');
-
-        const range = getEl('chart-range').value;
-        let data = [...state.entries].reverse(); 
-        
-        if (range === 'custom') {
-            const sStr = getEl('date-start').value;
-            const eStr = getEl('date-end').value;
-            if(sStr && eStr) data = data.filter(i => i.date >= sStr && i.date <= eStr);
-        } else if (parseInt(range) > 0) {
-            data = data.slice(-parseInt(range));
-        }
-
-        if (data.length === 0) return;
-
-        const accent = getComputedStyle(document.body).getPropertyValue('--accent').trim();
-        const gridColor = state.settings.theme === 'light' ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)';
-
-        state.chart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: data.map(e => {
-                    const d = new Date(e.date + 'T12:00:00');
-                    return d.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'});
-                }),
-                datasets: [{
-                    label: 'Peso',
-                    data: data.map(e => e.weight),
-                    borderColor: accent,
-                    backgroundColor: (ctx) => {
-                        const grad = ctx.chart.ctx.createLinearGradient(0, 0, 0, 300);
-                        grad.addColorStop(0, accent + '40');
-                        grad.addColorStop(1, accent + '00');
-                        return grad;
-                    },
-                    fill: true,
-                    tension: 0.4,
-                    borderWidth: 3,
-                    pointBackgroundColor: varColor => varColor.raw === Math.min(...data.map(d=>d.weight)) ? '#32D74B' : accent,
-                    pointRadius: 4,
-                    pointHoverRadius: 6
-                }]
-            },
-            options: {
-                responsive: true, 
-                maintainAspectRatio: false,
-                plugins: { legend: {display:false}, tooltip: { mode: 'index', intersect: false } },
-                scales: { 
-                    x: { grid: {display:false}, ticks: {color: '#8E8E93', maxTicksLimit: 6} },
-                    y: { grid: {color: gridColor}, ticks: {color: '#8E8E93'} }
-                },
-                interaction: { mode: 'nearest', axis: 'x', intersect: false }
-            }
-        });
-    };
-
-    const handleRangeChange = () => {
-        const val = getEl('chart-range').value;
-        if(val === 'custom') getEl('custom-date-container').classList.remove('hidden');
-        else {
-            getEl('custom-date-container').classList.add('hidden');
+            renderStats(current, start, goal);
+            renderHistory();
             renderChart();
-        }
-    };
-
-    // --- AI & CHAT ---
-    const handleImageUpload = (input) => {
-        const file = input.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            state.currentImageBase64 = e.target.result.split(',')[1];
-            getEl('img-preview').src = e.target.result;
-            getEl('img-preview-container').classList.remove('hidden');
+            if(window.lucide) lucide.createIcons();
         };
-        reader.readAsDataURL(file);
-    };
 
-    const clearImage = () => {
-        state.currentImageBase64 = null;
-        getEl('img-preview-container').classList.add('hidden');
-        getEl('file-upload').value = '';
-    };
-
-    const aiPrompt = async (type) => {
-        const tx = getEl('ai-input');
-        
-        // --- 1. SIMULADOR DE FUTURO ---
-        if (type === 'futuro') {
-            // Coleta dados para análise matemática
-            const history = state.entries.slice(0, 10); // Pega os últimos 10 registros
-            if(history.length < 2) return showToast("Preciso de pelo menos 2 registros de peso!", "error");
-
-            const current = history[0].weight;
-            const old = history[history.length-1].weight;
-            const diff = current - old;
-            const days = (new Date(history[0].date) - new Date(history[history.length-1].date)) / (1000 * 60 * 60 * 24);
-            const rate = diff / (days || 1); // Kg por dia
+        const renderStats = (current, start, goal) => {
+            const h = (parseFloat(state.settings.height) || 170) / 100;
+            const bmi = current.weight / (h * h);
+            getEl('bmi-val').innerText = bmi.toFixed(1);
             
-            const prompt = `
-            Atue como um Matemático e Nutricionista.
-            Meus Dados:
-            - Peso Atual: ${current}kg
-            - Meta: ${state.settings.goal}kg
-            - Histórico recente: Perdi ${Math.abs(diff).toFixed(1)}kg em ${Math.round(days)} dias.
+            let label = "Normal", pos = 33, color = "var(--success)";
+            if (bmi < 18.5) { label="Abaixo"; pos=10; color="#64D2FF"; }
+            else if (bmi >= 25 && bmi < 30) { label="Sobrepeso"; pos=70; color="#FFD60A"; }
+            else if (bmi >= 30) { label="Obesidade"; pos=95; color="#FF453A"; }
             
-            Tarefa:
-            1. Calcule e projete EXATAMENTE em que data vou atingir minha meta se continuar nesse ritmo.
-            2. Se o ritmo estiver muito lento ou perigoso, me avise.
-            3. Seja curto e direto. Use formatação Markdown.
-            `;
-            tx.value = prompt;
-            sendAI();
-            tx.value = '';
-        }
-        
-        else if (type === 'dieta') {
-            const current = state.entries[0]?.weight || 'N/A';
-            const goal = state.settings.goal || 'N/A';
-            const height = state.settings.height || 'N/A';
-            
-            // Pergunta interativa para refinar
-            const preferencia = await app.ask("Preferência Alimentar?", "Ex: Low Carb, Barata, Vegana, Sem lactose...");
-            if (preferencia === null) return;
+            const badge = getEl('bmi-label');
+            badge.innerText = label;
+            badge.style.color = color;
+            badge.style.background = color + '22'; 
+            getEl('bmi-marker').style.left = `${pos}%`;
 
-            const prompt = `
-            Atue como um Nutricionista Esportivo de Elite. Crie um Plano Alimentar Completo para hoje.
-            
-            MEUS DADOS:
-            - Peso: ${current}kg
-            - Altura: ${height}cm
-            - Objetivo: Chegar em ${goal}kg
-            - Preferência: ${preferencia || 'Equilibrada e Simples'}
-            
-            SAÍDA ESPERADA (Use Markdown e tabelas):
-            1. Calcule minha Taxa Metabólica Basal (TMB) estimada e o Déficit necessário.
-            2. Crie um cardápio com: Café da Manhã, Almoço, Lanche e Jantar.
-            3. Coloque as calorias e proteínas aproximadas de cada refeição.
-            4. Dica de suplementação básica no final.
-            `;
+            getEl('total-loss').innerText = (start.weight - current.weight).toFixed(1) + "kg";
+            if(start.weight < current.weight) getEl('total-loss').style.color = 'var(--danger)';
 
-            tx.value = prompt;
-            
-            sendAI(); 
-            tx.value = '';
-        }
-
-        else if (type === 'receita') {
-            const ingredientes = await app.ask("Quais ingredientes você tem?", "Ex: Ovos, frango, batata...");
-            if (!ingredientes) return;
-            tx.value = `Sugira uma receita fit rápida usando: ${ingredientes}. Inclua contagem de calorias.`;
-            sendAI();
-        } 
-        else if (type === 'coach') {
-            tx.value = 'Analise meu progresso recente e me dê um feedback curto e motivacional estilo estoico.';
-            sendAI();
-        }
-    };
-
-    const renderChatHistory = () => {
-        const feed = getEl('chat-feed');
-        // Mantém a mensagem de boas vindas se for o único
-        if(state.chatHistory.length > 0) feed.innerHTML = ''; 
-        
-        state.chatHistory.forEach(msg => {
-            const div = document.createElement('div');
-            div.className = `chat-bubble chat-${msg.role}`;
-            div.innerHTML = msg.content;
-            feed.appendChild(div);
-        });
-        feed.scrollTo(0, feed.scrollHeight);
-    };
-
-    const saveChatMsg = (role, content) => {
-        state.chatHistory.push({ role, content });
-        touchState(); // Atualiza data
-        pushToCloud();
-    };
-
-    const updateUsageUI = () => {
-        // Tenta achar o elemento pelo ID que criamos no HTML
-        const el = document.getElementById('ai-counter'); 
-        
-        if(el && state.aiUsage) {
-            el.innerText = `${state.aiUsage.count}/20`;
-            
-            // Pinta de vermelho se lotou
-            if(state.aiUsage.count >= 20) {
-                el.style.color = 'var(--danger)';
-                el.style.border = '1px solid var(--danger)';
-            }
-        }
-    };
-
-    const sendAI = async () => {
-        const txt = getEl('ai-input').value.trim();
-        const img = state.currentImageBase64;
-        
-        if (!txt && !img) return;
-        if (!state.settings.apiKey) return showToast("Configure a API Key.", "error");
-
-        // --- 1. GARANTIA DO CONTADOR (Auto-correção) ---
-        if (!state.aiUsage) state.aiUsage = { count: 0, date: new Date().toISOString().split('T')[0] };
-
-        // --- 2. VERIFICAÇÃO DE LIMITE ---
-        if (state.aiUsage.count >= 20) {
-            return showToast("Limite diário (20) atingido. Volte amanhã!", "error");
-        }
-
-        const feed = getEl('chat-feed');
-        
-        // UI User
-        const userHtml = `${txt} ${img ? '<div style="margin-top:5px; font-size:11px; opacity:0.8"><i class="ph-fill ph-image"></i> Imagem enviada</div>' : ''}`;
-        feed.innerHTML += `<div class="chat-bubble chat-user">${userHtml}</div>`;
-        saveChatMsg('user', userHtml);
-
-        getEl('ai-input').value = '';
-        clearImage();
-        
-        // Loader
-        const loadId = 'load-' + Date.now();
-        feed.innerHTML += `<div class="chat-bubble chat-ai" id="${loadId}"><i data-lucide="loader-2" class="spin" width="16" height="16"></i> Analisando...</div>`;
-        if(window.lucide) lucide.createIcons();
-        feed.scrollTo(0, feed.scrollHeight);
-
-        try {
-            const model = state.settings.aiModel || "gemini-1.5-flash";
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${state.settings.apiKey}`;
-            
-            // Prompt do Sistema (Botão de Comida + Personalidade)
-            const systemPrompt = `
-            Você é um nutricionista do app WeightPro. 
-            Se o usuário enviar uma foto de comida ou descrever uma refeição, responda NO FINAL com este JSON estrito:
-            \`\`\`json
-            { "tool": "addFood", "name": "Nome Curto", "kcal": 0, "prot": 0 }
-            \`\`\`
-            Se não for comida, apenas texto útil em Markdown.
-            Contexto: Peso ${state.entries[0]?.weight || '?'}kg, Meta ${state.settings.goal}kg.`;
-
-            const parts = [{ text: systemPrompt }];
-            if (txt) parts.push({ text: txt });
-            if (img) parts.push({ inline_data: { mime_type: "image/jpeg", data: img } });
-
-            const resp = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: parts }] })
+            const recentEntries = state.entries.filter(e => {
+                const d = new Date(e.date);
+                const now = new Date();
+                return (now - d) / (1000 * 3600 * 24) <= 30;
             });
 
-            const json = await resp.json();
-            if (json.error) throw new Error(json.error.message);
-            
-            // --- 3. SUCESSO! ADICIONA +1 AGORA ---
-            state.aiUsage.count++;
-            updateUsageUI(); // Atualiza a tela (0/20 -> 1/20)
-            touchState();    // Salva no localStorage
-            console.log("Contador atualizado para:", state.aiUsage.count);
-            // -------------------------------------
-
-            let aiTxt = json.candidates[0].content.parts[0].text;
-            let buttonHtml = '';
-            
-            // Tenta achar o botão de comida (JSON)
-            const jsonMatch = aiTxt.match(/```json\s*([\s\S]*?)\s*```/);
-            if (jsonMatch) {
-                try {
-                    const data = JSON.parse(jsonMatch[1]);
-                    if (data.tool === 'addFood') {
-                        aiTxt = aiTxt.replace(jsonMatch[0], '');
-                        buttonHtml = `
-                        <div style="margin-top:10px; border-top:1px solid var(--border); padding-top:10px;">
-                            <button class="action-chip" onclick="app.quickAddFood('${data.name}', ${data.kcal}, ${data.prot}, 0, 0); this.disabled=true; this.innerText='Adicionado!';">
-                                <i data-lucide="plus-circle" width="16" height="16"></i> 
-                                Salvar: ${data.name} (${data.kcal}kcal)
-                            </button>
-                        </div>`;
-                    }
-                } catch (e) { console.error("JSON Parse Error", e); }
-            }
-
-            const finalHtml = marked.parse(aiTxt) + buttonHtml;
-            document.getElementById(loadId).innerHTML = finalHtml;
-            saveChatMsg('ai', finalHtml);
-            
-            if(window.lucide) lucide.createIcons();
-            
-        } catch(e) {
-            document.getElementById(loadId).innerText = "Erro: " + e.message;
-            document.getElementById(loadId).style.color = "var(--danger)";
-            console.error("Erro na IA:", e);
-        }
-        feed.scrollTo(0, feed.scrollHeight);
-    };
-
-    // --- PIN & EXPORT & CONFIG (IGUAIS) ---
-    let pinBuffer = "";
-    const enterPin = (n) => {
-        if (n === 'del') pinBuffer = pinBuffer.slice(0,-1);
-        else if (pinBuffer.length < 4) pinBuffer += n;
-
-        const dots = document.querySelectorAll('.pin-dot');
-        dots.forEach((d, i) => {
-            d.style.background = i < pinBuffer.length ? 'var(--accent)' : 'transparent';
-            d.style.borderColor = i < pinBuffer.length ? 'var(--accent)' : 'var(--text-secondary)';
-        });
-
-        if (pinBuffer.length === 4) {
-            setTimeout(() => {
-                if (pinBuffer === state.settings.pin) {
-                    state.unlocked = true;
-                    getEl('pin-overlay').classList.remove('locked');
-                    getEl('main-app').classList.add('loaded');
-                    pinBuffer = "";
-                    renderChart();
-                } else {
-                    getEl('pin-dots').classList.add('shake');
-                    showToast("PIN Incorreto", "error");
-                    pinBuffer = "";
-                    dots.forEach(d => { d.style.background='transparent'; d.style.borderColor='var(--text-secondary)'; });
-                }
-            }, 200);
-        }
-    };
-
-    const togglePinSetup = () => {
-        const chk = getEl('chk-pin');
-        if (chk.checked) {
-            const p1 = prompt("Crie um PIN de 4 números:");
-            if(!p1) { chk.checked = false; return; }
-            if (p1.length !== 4 || isNaN(p1)) { alert("Deve ter 4 números."); chk.checked = false; return; }
-            state.settings.pin = p1;
-            showToast("Proteção ativada!");
-        } else {
-            if(confirm("Remover proteção por PIN?")) {
-                state.settings.pin = null;
-                showToast("Proteção removida.");
-            } else {
-                chk.checked = true;
-            }
-        }
-    };
-
-    const exportPDF = () => {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        doc.setFillColor(10, 132, 255);
-        doc.rect(0,0,210,30, 'F');
-        doc.setTextColor(255,255,255);
-        doc.setFontSize(20);
-        doc.text("Weigh Pro Relatório", 15, 20);
-        doc.setTextColor(0,0,0);
-        doc.setFontSize(10);
-        doc.text(`Gerado em ${new Date().toLocaleDateString()}`, 150, 20);
-
-        const data = state.entries.map(e => [
-            new Date(e.date+'T12:00:00').toLocaleDateString(),
-            e.weight + ' kg',
-            (e.weight - state.settings.goal).toFixed(1)
-        ]);
-
-        doc.autoTable({
-            head: [['Data', 'Peso', 'Dif. Meta']],
-            body: data,
-            startY: 40,
-            theme: 'grid',
-            headStyles: { fillColor: [10, 132, 255] }
-        });
-        doc.save('weigh_pro_history.pdf');
-    };
-
-    const nav = (view) => {
-        ['home','stats','ai'].forEach(v => {
-            getEl('view-'+v).classList.add('hidden');
-            getEl('nav-'+v).classList.remove('active');
-            getEl('d-nav-'+v).classList.remove('active');
-        });
-        getEl('view-'+view).classList.remove('hidden');
-        getEl('nav-'+view).classList.add('active');
-        getEl('d-nav-'+view).classList.add('active');
-        if(view === 'home') setTimeout(renderChart, 50);
-    };
-
-    const toggleSettings = () => {
-        const m = getEl('modal-settings');
-        const isOpen = m.classList.contains('active');
-        if (!isOpen) {
-            m.classList.add('active');
-            getEl('cfg-api').value = state.settings.apiKey;
-            getEl('cfg-goal').value = state.settings.goal;
-            getEl('cfg-height').value = state.settings.height;
-            getEl('chk-pin').checked = !!state.settings.pin;
-            getEl('cfg-model').value = state.settings.aiModel || 'gemini-2.5-flash';
-            getEl('chk-readonly').checked = !!state.settings.readOnly;
-            renderLayoutEditor();
-        } else {
-            m.classList.remove('active');
-        }
-    };
-
-    const saveSettings = () => {
-        state.settings.apiKey = getEl('cfg-api').value;
-        state.settings.goal = getEl('cfg-goal').value;
-        state.settings.height = getEl('cfg-height').value;
-        state.settings.aiModel = getEl('cfg-model').value;
-        state.settings.readOnly = getEl('chk-readonly').checked;
-        touchState(); 
-        pushToCloud();
-        applyTheme(state.settings.theme);
-        toggleSettings();
-        render();
-        updateAIModelLabel();
-        showToast("Configurações salvas!");
-    };
-
-    const setTheme = (t) => { state.settings.theme = t; applyTheme(t); };
-    const applyTheme = (t) => { document.body.setAttribute('data-theme', t); if(state.chart) renderChart(); };
-
-    const setupUI = () => {
-        const tx = getEl('ai-input');
-
-            if(tx) {
-                const autoResize = () => {
-                    tx.style.height = 'auto'; // Reseta
-                    tx.style.height = (tx.scrollHeight) + 'px'; // Cresce
+            if (recentEntries.length >= 2) {
+                const first = recentEntries[recentEntries.length-1];
+                const last = recentEntries[0];
+                const days = (new Date(last.date) - new Date(first.date)) / (1000 * 3600 * 24);
+                const loss = first.weight - last.weight;
+                
+                if (days > 0) {
+                    const ratePerDay = loss / days;
+                    const remaining = current.weight - goal;
                     
-                    if(tx.scrollHeight > 150) tx.style.overflowY = "auto";
-                    else tx.style.overflowY = "hidden";
-                };
+                    getEl('stat-rate').innerText = (ratePerDay * 7 > 0 ? '-' : '+') + Math.abs(ratePerDay * 7).toFixed(1) + "kg";
+                    getEl('stat-rate').style.color = ratePerDay > 0 ? 'var(--success)' : 'var(--danger)';
 
-                // 1. Ao digitar normalmente
-                tx.addEventListener('input', autoResize);
-                
-                // 2. CORREÇÃO: Ao colar (espera 10ms para o texto entrar)
-                tx.addEventListener('paste', () => setTimeout(autoResize, 10));
-                
-                // 3. Ao mudar o foco ou mudar valor
-                tx.addEventListener('change', autoResize);
-
-                // Atalho do Enter (mantido)
-                tx.addEventListener('keydown', (e) => {
-                    if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                        e.preventDefault();
-                        sendAI();
+                    if (remaining > 0 && ratePerDay > 0) {
+                        const daysLeft = remaining / ratePerDay;
+                        const date = new Date();
+                        date.setDate(date.getDate() + daysLeft);
+                        getEl('proj-remaining').innerText = remaining.toFixed(1) + "kg";
+                        getEl('proj-date').innerText = date.toLocaleDateString('pt-BR', {day:'numeric', month:'short'});
+                        getEl('smart-prediction').innerText = `✨ Previsão: ${date.toLocaleDateString()}`;
+                    } else {
+                        getEl('proj-remaining').innerText = "--"; 
+                        getEl('proj-date').innerText = "--";
+                        getEl('smart-prediction').innerText = "Continue firme.";
                     }
-                });
+                }
             }
 
-        // 1. Auto-resize do Textarea
-        tx.addEventListener('input', function() {
-            this.style.height = 'auto'; // Reseta para calcular
-            this.style.height = (this.scrollHeight) + 'px'; // Define altura baseada no texto
+            const weekEntries = state.entries.slice(0, 7);
+            if(weekEntries.length > 0) {
+                const avg = weekEntries.reduce((a,b) => a + b.weight, 0) / weekEntries.length;
+                getEl('stat-avg').innerText = avg.toFixed(1) + "kg";
+            }
+        };
+
+        const renderHistory = () => {
+            const list = getEl('history-list');
+            list.innerHTML = state.entries.map(e => {
+                const dateObj = new Date(e.date + 'T12:00:00'); 
+                return `
+                <div style="display:flex; justify-content:space-between; padding:16px; background:var(--bg-elevated); border-radius:16px; align-items:center;">
+                    <div>
+                        <strong style="font-size:17px;">${e.weight}kg</strong>
+                        <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">
+                            ${dateObj.toLocaleDateString('pt-BR', {weekday: 'short', day:'2-digit', month:'long'})}
+                        </div>
+                    </div>
+                    <button onclick="app.deleteEntry(${e.id})" class="btn-icon" style="width:32px; height:32px; color:var(--danger); background:transparent;">
+                        <i data-lucide="trash-2" width="15" height="15"></i>
+                    </button>
+                </div>
+                `;
+            }).join('');
+        };
+
+        const renderChart = () => {
+            const ctx = getEl('mainChart').getContext('2d');
+            const emptyEl = getEl('chart-empty');
+            const canvas = getEl('mainChart');
+
+            if (state.chart) { state.chart.destroy(); state.chart = null; }
+
+            if (state.entries.length < 2) {
+                canvas.classList.add('hidden');
+                emptyEl.classList.remove('hidden');
+                return;
+            }
+
+            canvas.classList.remove('hidden');
+            emptyEl.classList.add('hidden');
+
+            const range = getEl('chart-range').value;
+            let data = [...state.entries].reverse(); 
             
-            // Limita a altura máxima para não cobrir a tela toda (ex: 150px)
-            if(this.scrollHeight > 150) {
-                this.style.overflowY = "auto";
-            } else {
-                this.style.overflowY = "hidden";
+            if (range === 'custom') {
+                const sStr = getEl('date-start').value;
+                const eStr = getEl('date-end').value;
+                if(sStr && eStr) data = data.filter(i => i.date >= sStr && i.date <= eStr);
+            } else if (parseInt(range) > 0) {
+                data = data.slice(-parseInt(range));
             }
-        });
 
-        // 2. Lógica do Enter
-        tx.addEventListener('keydown', (e) => {
-            // Se apertar APENAS Enter, ele pula linha (padrão do textarea)
-            // Se apertar CTRL + Enter (no PC), ele envia
-            if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                e.preventDefault(); // Não pula linha
+            if (data.length === 0) return;
+
+            const accent = getComputedStyle(document.body).getPropertyValue('--accent').trim();
+            const gridColor = state.settings.theme === 'light' ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)';
+
+            state.chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(e => {
+                        const d = new Date(e.date + 'T12:00:00');
+                        return d.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'});
+                    }),
+                    datasets: [{
+                        label: 'Peso',
+                        data: data.map(e => e.weight),
+                        borderColor: accent,
+                        backgroundColor: (ctx) => {
+                            const grad = ctx.chart.ctx.createLinearGradient(0, 0, 0, 300);
+                            grad.addColorStop(0, accent + '40');
+                            grad.addColorStop(1, accent + '00');
+                            return grad;
+                        },
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointBackgroundColor: varColor => varColor.raw === Math.min(...data.map(d=>d.weight)) ? '#32D74B' : accent,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    plugins: { legend: {display:false}, tooltip: { mode: 'index', intersect: false } },
+                    scales: { 
+                        x: { grid: {display:false}, ticks: {color: '#8E8E93', maxTicksLimit: 6} },
+                        y: { grid: {color: gridColor}, ticks: {color: '#8E8E93'} }
+                    },
+                    interaction: { mode: 'nearest', axis: 'x', intersect: false }
+                }
+            });
+        };
+
+        const handleRangeChange = () => {
+            const val = getEl('chart-range').value;
+            if(val === 'custom') getEl('custom-date-container').classList.remove('hidden');
+            else {
+                getEl('custom-date-container').classList.add('hidden');
+                renderChart();
+            }
+        };
+
+        // --- AI & CHAT ---
+        const handleImageUpload = (input) => {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                state.currentImageBase64 = e.target.result.split(',')[1];
+                getEl('img-preview').src = e.target.result;
+                getEl('img-preview-container').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        };
+
+        const clearImage = () => {
+            state.currentImageBase64 = null;
+            getEl('img-preview-container').classList.add('hidden');
+            getEl('file-upload').value = '';
+        };
+
+        const aiPrompt = async (type) => {
+            const tx = getEl('ai-input');
+            
+            if (type === 'futuro') {
+                const history = state.entries.slice(0, 10);
+                if(history.length < 2) return showToast("Preciso de pelo menos 2 registros de peso!", "error");
+
+                const current = history[0].weight;
+                const old = history[history.length-1].weight;
+                const diff = current - old;
+                const days = (new Date(history[0].date) - new Date(history[history.length-1].date)) / (1000 * 60 * 60 * 24);
+                
+                const prompt = `
+                Atue como um Matemático.
+                Meus Dados: Peso Atual: ${current}kg, Meta: ${state.settings.goal}kg.
+                Histórico: Perdi ${Math.abs(diff).toFixed(1)}kg em ${Math.round(days)} dias.
+                Tarefa: Calcule a data exata da meta. Seja curto.
+                `;
+                tx.value = prompt;
+                sendAI();
+                tx.value = '';
+            }
+            else if (type === 'dieta') {
+                const current = state.entries[0]?.weight || 'N/A';
+                const preferencia = await app.ask("Preferência Alimentar?", "Ex: Low Carb, Vegana...");
+                if (preferencia === null) return;
+
+                const prompt = `
+                Nutricionista Esportivo:
+                Peso: ${current}kg, Altura: ${state.settings.height}cm, Meta: ${state.settings.goal}kg.
+                Preferência: ${preferencia}.
+                Crie um cardápio de 1 dia com kcal/macros. Use tabelas Markdown.
+                `;
+                tx.value = prompt;
+                sendAI(); 
+                tx.value = '';
+            }
+            else if (type === 'receita') {
+                const ingredientes = await app.ask("Quais ingredientes você tem?", "Ex: Ovos, frango...");
+                if (!ingredientes) return;
+                tx.value = `Sugira uma receita fit com: ${ingredientes}. Inclua calorias.`;
+                sendAI();
+            } 
+            else if (type === 'coach') {
+                tx.value = 'Analise meu progresso recente e me dê um feedback curto e motivacional estilo estoico.';
                 sendAI();
             }
-        });
-        
-        // Prevent Mobile Safari rubber banding
-        document.body.addEventListener('touchmove', (e) => {
-             if(getEl('modal-settings').classList.contains('active')) return;
-        }, {passive: false});
-    };
+        };
 
-    let promptResolver = null;
+        const renderChatHistory = () => {
+            const feed = getEl('chat-feed');
+            if(state.chatHistory.length > 0) feed.innerHTML = ''; 
+            state.chatHistory.forEach(msg => {
+                const div = document.createElement('div');
+                div.className = `chat-bubble chat-${msg.role}`;
+                div.innerHTML = msg.content;
+                feed.appendChild(div);
+            });
+            feed.scrollTo({ top: feed.scrollHeight, behavior: 'smooth' });
+        };
 
-    const ask = (message, placeholder = "") => {
-        return new Promise((resolve) => {
+        const saveChatMsg = (role, content) => {
+            state.chatHistory.push({ role, content });
+            touchState();
+            pushToCloud();
+        };
+
+        const updateUsageUI = () => {
+            const el = document.getElementById('ai-counter'); 
+            if(el && state.aiUsage) {
+                el.innerText = `${state.aiUsage.count}/20`;
+                if(state.aiUsage.count >= 20) {
+                    el.style.color = 'var(--danger)';
+                    el.style.border = '1px solid var(--danger)';
+                }
+            }
+        };
+
+        const sendAI = async () => {
+            const txt = getEl('ai-input').value.trim();
+            const img = state.currentImageBase64;
+            
+            if (!txt && !img) return;
+            if (!state.settings.apiKey) return showToast("Configure a API Key.", "error");
+
+            if (!state.aiUsage) state.aiUsage = { count: 0, date: new Date().toISOString().split('T')[0] };
+            if (state.aiUsage.count >= 20) return showToast("Limite diário (20) atingido.", "error");
+
+            const feed = getEl('chat-feed');
+            const userHtml = `${txt} ${img ? '<div style="margin-top:5px; font-size:11px; opacity:0.8"><i class="ph-fill ph-image"></i> Imagem enviada</div>' : ''}`;
+            
+            feed.innerHTML += `<div class="chat-bubble chat-user">${userHtml}</div>`;
+            saveChatMsg('user', userHtml);
+            getEl('ai-input').value = '';
+            clearImage();
+            
+            const loadId = 'load-' + Date.now();
+            feed.innerHTML += `<div class="chat-bubble chat-ai" id="${loadId}"><i data-lucide="loader-2" class="spin" width="16" height="16"></i> Analisando...</div>`;
+            if(window.lucide) lucide.createIcons();
+            feed.scrollTo({ top: feed.scrollHeight, behavior: 'smooth' });
+
+            try {
+                const model = state.settings.aiModel || "gemini-2.5-flash";
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${state.settings.apiKey}`;
+                
+                const systemPrompt = `
+                Você é um nutricionista do app WeighPro. 
+                Se o usuário enviar uma foto de comida ou descrever uma refeição, responda NO FINAL com este JSON estrito (sem nada depois):
+                \`\`\`json
+                { "tool": "addFood", "name": "Nome Curto", "kcal": 0, "prot": 0, "carb": 0, "fat": 0 }
+                \`\`\`
+                Se não for comida, texto útil em Markdown. Peso ${state.entries[0]?.weight || '?'}kg.`;
+
+                const parts = [{ text: systemPrompt }];
+                if (txt) parts.push({ text: txt });
+                if (img) parts.push({ inline_data: { mime_type: "image/jpeg", data: img } });
+
+                const resp = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: parts }] })
+                });
+
+                const json = await resp.json();
+                if (json.error) throw new Error(json.error.message);
+                
+                state.aiUsage.count++;
+                updateUsageUI(); 
+                touchState();
+
+                let aiTxt = json.candidates[0].content.parts[0].text;
+                let buttonHtml = '';
+                
+                const jsonMatch = aiTxt.match(/```json\s*([\s\S]*?)\s*```/);
+                if (jsonMatch) {
+                    try {
+                        const data = JSON.parse(jsonMatch[1]);
+                        if (data.tool === 'addFood') {
+                            aiTxt = aiTxt.replace(jsonMatch[0], '');
+                            buttonHtml = `
+                            <div style="margin-top:10px; border-top:1px solid var(--border); padding-top:10px;">
+                                <button class="action-chip" onclick="app.quickAddFood('${data.name}', ${data.kcal}, ${data.prot}, ${data.carb || 0}, ${data.fat || 0}); this.disabled=true; this.innerText='Adicionado!';">
+                                    <i data-lucide="plus-circle" width="16" height="16"></i> 
+                                    Salvar: ${data.name} (${data.kcal}kcal)
+                                </button>
+                            </div>`;
+                        }
+                    } catch (e) { console.error("JSON Parse Error", e); }
+                }
+
+                const finalHtml = marked.parse(aiTxt) + buttonHtml;
+                const loader = document.getElementById(loadId);
+                if(loader) loader.innerHTML = finalHtml;
+                saveChatMsg('ai', finalHtml);
+                
+                if(window.lucide) lucide.createIcons();
+                
+            } catch(e) {
+                const loader = document.getElementById(loadId);
+                if(loader) {
+                    loader.innerText = "Erro: " + e.message;
+                    loader.style.color = "var(--danger)";
+                }
+            }
+            feed.scrollTo({ top: feed.scrollHeight, behavior: 'smooth' });
+        };
+
+        // --- UTILS ---
+        let pinBuffer = "";
+        const enterPin = (n) => {
+            if (n === 'del') pinBuffer = pinBuffer.slice(0,-1);
+            else if (pinBuffer.length < 4) pinBuffer += n;
+
+            const dots = document.querySelectorAll('.pin-dot');
+            dots.forEach((d, i) => {
+                d.style.background = i < pinBuffer.length ? 'var(--accent)' : 'transparent';
+                d.style.borderColor = i < pinBuffer.length ? 'var(--accent)' : 'var(--text-secondary)';
+            });
+
+            if (pinBuffer.length === 4) {
+                setTimeout(() => {
+                    if (pinBuffer === state.settings.pin) {
+                        state.unlocked = true;
+                        getEl('pin-overlay').classList.remove('locked');
+                        getEl('main-app').classList.add('loaded');
+                        pinBuffer = "";
+                        renderChart();
+                    } else {
+                        getEl('pin-dots').classList.add('shake');
+                        showToast("PIN Incorreto", "error");
+                        pinBuffer = "";
+                        dots.forEach(d => { d.style.background='transparent'; d.style.borderColor='var(--text-secondary)'; });
+                    }
+                }, 200);
+            }
+        };
+
+        const togglePinSetup = () => {
+            const chk = getEl('chk-pin');
+            if (chk.checked) {
+                const p1 = prompt("Crie um PIN de 4 números:");
+                if(!p1) { chk.checked = false; return; }
+                if (p1.length !== 4 || isNaN(p1)) { alert("Deve ter 4 números."); chk.checked = false; return; }
+                state.settings.pin = p1;
+                showToast("Proteção ativada!");
+            } else {
+                if(confirm("Remover proteção por PIN?")) {
+                    state.settings.pin = null;
+                    showToast("Proteção removida.");
+                } else {
+                    chk.checked = true;
+                }
+            }
+        };
+
+        const exportPDF = () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.setFillColor(10, 132, 255);
+            doc.rect(0,0,210,30, 'F');
+            doc.setTextColor(255,255,255);
+            doc.setFontSize(20);
+            doc.text("Weigh Pro Relatório", 15, 20);
+            doc.setTextColor(0,0,0);
+            doc.setFontSize(10);
+            doc.text(`Gerado em ${new Date().toLocaleDateString()}`, 150, 20);
+
+            const data = state.entries.map(e => [
+                new Date(e.date+'T12:00:00').toLocaleDateString(),
+                e.weight + ' kg',
+                (e.weight - state.settings.goal).toFixed(1)
+            ]);
+
+            doc.autoTable({
+                head: [['Data', 'Peso', 'Dif. Meta']],
+                body: data,
+                startY: 40,
+                theme: 'grid',
+                headStyles: { fillColor: [10, 132, 255] }
+            });
+            doc.save('weigh_pro_history.pdf');
+        };
+
+        const nav = (view) => {
+            ['home','stats','ai'].forEach(v => {
+                getEl('view-'+v).classList.add('hidden');
+                getEl('nav-'+v).classList.remove('active');
+                getEl('d-nav-'+v).classList.remove('active');
+            });
+            getEl('view-'+view).classList.remove('hidden');
+            getEl('nav-'+view).classList.add('active');
+            getEl('d-nav-'+view).classList.add('active');
+            if(view === 'home') setTimeout(renderChart, 50);
+        };
+
+        const toggleSettings = () => {
+            const m = getEl('modal-settings');
+            const isOpen = m.classList.contains('active');
+            if (!isOpen) {
+                m.classList.add('active');
+                getEl('cfg-api').value = state.settings.apiKey;
+                getEl('cfg-goal').value = state.settings.goal;
+                getEl('cfg-height').value = state.settings.height;
+                getEl('chk-pin').checked = !!state.settings.pin;
+                getEl('cfg-model').value = state.settings.aiModel || 'gemini-2.5-flash';
+                getEl('chk-readonly').checked = !!state.settings.readOnly;
+                renderLayoutEditor();
+            } else {
+                m.classList.remove('active');
+            }
+        };
+
+        const saveSettings = () => {
+            state.settings.apiKey = getEl('cfg-api').value;
+            state.settings.goal = getEl('cfg-goal').value;
+            state.settings.height = getEl('cfg-height').value;
+            state.settings.aiModel = getEl('cfg-model').value;
+            state.settings.readOnly = getEl('chk-readonly').checked;
+            touchState(); 
+            pushToCloud();
+            applyTheme(state.settings.theme);
+            toggleSettings();
+            render();
+            updateAIModelLabel();
+            showToast("Configurações salvas!");
+        };
+
+        const setTheme = (t) => { state.settings.theme = t; applyTheme(t); };
+        const applyTheme = (t) => { document.body.setAttribute('data-theme', t); if(state.chart) renderChart(); };
+
+        let promptResolver = null;
+        const ask = (message, placeholder = "") => {
+            return new Promise((resolve) => {
+                const modal = getEl('modal-prompt');
+                const input = getEl('prompt-input');
+                const msgEl = getEl('prompt-msg');
+
+                msgEl.innerText = message;
+                input.value = "";
+                input.placeholder = placeholder;
+                
+                modal.classList.add('active');
+                input.focus();
+                promptResolver = resolve;
+                input.onkeydown = (e) => { if(e.key === 'Enter') resolvePrompt(true); };
+            });
+        };
+
+        const resolvePrompt = (status) => {
             const modal = getEl('modal-prompt');
             const input = getEl('prompt-input');
-            const msgEl = getEl('prompt-msg');
+            modal.classList.remove('active');
+            if (promptResolver) {
+                const result = status ? input.value : null;
+                promptResolver(result);
+                promptResolver = null;
+            }
+        };
 
-            msgEl.innerText = message;
-            input.value = "";
-            input.placeholder = placeholder;
+        const updateAIModelLabel = () => {
+            const el = getEl('ai-model-label');
+            if (!el) return;
+            const model = state.settings.aiModel || 'gemini-2.5-flash';
+            if (model.includes('lite')) el.innerText = "Gemini 2.5 Flash Lite";
+            else if (model.includes('3')) el.innerText = "Gemini 3 Flash";
+            else el.innerText = "Gemini 2.5 Flash";
+        };
+
+        let macroChartInstance = null;
+        const renderMacros = () => {
+            const ctx = getEl('macroChart');
+            if(!ctx) return;
             
-            modal.classList.add('active');
-            input.focus();
+            const today = new Date().toISOString().split('T')[0];
+            const todaysMeals = (state.foodLogs || []).filter(f => f.date === today);
+            
+            const totalProt = todaysMeals.reduce((a, b) => a + (b.prot || 0), 0);
+            const totalCarb = todaysMeals.reduce((a, b) => a + (b.carb || 0), 0);
+            const totalFat = todaysMeals.reduce((a, b) => a + (b.fat || 0), 0);
+            const totalKcal = todaysMeals.reduce((a, b) => a + (b.kcal || 0), 0);
 
-            promptResolver = resolve;
+            getEl('macro-total').innerText = totalKcal;
 
-            input.onkeydown = (e) => {
-                if(e.key === 'Enter') resolvePrompt(true);
+            if(macroChartInstance) macroChartInstance.destroy();
+
+            macroChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Prot', 'Carb', 'Gord'],
+                    datasets: [{
+                        data: [totalProt, totalCarb, totalFat],
+                        backgroundColor: ['#FF453A', '#FFD60A', '#32D74B'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    cutout: '75%', 
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } } 
+                }
+            });
+        };
+
+        // --- FOOD ---
+        const toggleFoodModal = () => {
+            const m = getEl('modal-food');
+            m.classList.toggle('active');
+            if(m.classList.contains('active')) getEl('food-name').focus();
+        };
+        
+        // --- CORREÇÃO: Função estava faltando ---
+        const closeFoodModal = () => {
+            const m = getEl('modal-food');
+            m.classList.remove('active');
+        };
+
+        const saveFood = () => {
+            const name = getEl('food-name').value;
+            const kcal = parseFloat(getEl('food-kcal').value) || 0;
+            const prot = parseFloat(getEl('food-prot').value) || 0;
+            const carb = parseFloat(getEl('food-carb').value) || 0;
+            const fat = parseFloat(getEl('food-fat').value) || 0;
+
+            if(!name) return showToast("Digite um nome", "error");
+
+            const newFood = {
+                id: Date.now(),
+                date: new Date().toISOString().split('T')[0],
+                name, kcal, prot, carb, fat
             };
-        });
-    };
 
-    const resolvePrompt = (status) => {
-        const modal = getEl('modal-prompt');
-        const input = getEl('prompt-input');
-        
-        modal.classList.remove('active');
-        
-        if (promptResolver) {
-            const result = status ? input.value : null;
-            promptResolver(result);
-            promptResolver = null;
-        }
-    };
+            state.foodLogs.unshift(newFood);
+            
+            getEl('food-name').value = '';
+            getEl('food-kcal').value = '';
+            getEl('food-prot').value = '';
+            if(getEl('food-carb')) getEl('food-carb').value = '';
+            if(getEl('food-fat')) getEl('food-fat').value = '';
 
-    const updateAIModelLabel = () => {
-        const el = getEl('ai-model-label');
-        if (!el) return;
-
-        const model = state.settings.aiModel || 'gemini-2.5-flash';
-        
-        if (model.includes('lite')) el.innerText = "Gemini 2.5 Flash Lite";
-        else if (model.includes('3')) el.innerText = "Gemini 3 Flash";
-        else el.innerText = "Gemini 2.5 Flash";
-    };
-
-    let macroChartInstance = null;
-
-    const renderMacros = () => {
-        const ctx = getEl('macroChart');
-        if(!ctx) return;
-        
-        const today = new Date().toISOString().split('T')[0];
-        const todaysMeals = (state.foodLogs || []).filter(f => f.date === today);
-        
-        const totalKcal = todaysMeals.reduce((a, b) => a + (b.kcal || 0), 0);
-        const totalProt = todaysMeals.reduce((a, b) => a + (b.prot || 0), 0);
-        const totalCarb = todaysMeals.reduce((a, b) => a + (b.carb || 0), 0);
-        const totalFat = todaysMeals.reduce((a, b) => a + (b.fat || 0), 0);
-
-        getEl('macro-total').innerText = totalKcal;
-
-        if(macroChartInstance) macroChartInstance.destroy();
-
-        macroChartInstance = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Prot', 'Carb', 'Gord'],
-                datasets: [{
-                    data: [totalProt, totalCarb, totalFat],
-                    backgroundColor: ['#FF453A', '#FFD60A', '#32D74B'],
-                    borderWidth: 0,
-                    hoverOffset: 4
-                }]
-            },
-            options: {
-                cutout: '75%', // Espessura da rosca
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } } // Esconde a legenda padrão
-            }
-        });
-    };
-
-    // --- FUNÇÕES DE NUTRIÇÃO ---
-    const toggleFoodModal = () => {
-        const m = getEl('modal-food');
-        m.classList.toggle('active');
-        if(m.classList.contains('active')) getEl('food-name').focus();
-    };
-
-    // --- CORREÇÃO: SALVAR MANUALMENTE (MODAL) ---
-    const saveFood = () => {
-        const name = getEl('food-name').value;
-        const kcal = parseFloat(getEl('food-kcal').value) || 0;
-        const prot = parseFloat(getEl('food-prot').value) || 0;
-        const carb = parseFloat(getEl('food-carb').value) || 0;
-        const fat = parseFloat(getEl('food-fat').value) || 0;
-
-        if(!name) return showToast("Digite um nome", "error");
-
-        const newFood = {
-            id: Date.now(),
-            date: new Date().toISOString().split('T')[0],
-            name, kcal, prot, carb, fat
+            closeFoodModal(); // Agora funciona
+            touchState();
+            pushToCloud();
+            renderFood();
+            renderMacros(); 
+            
+            showToast("Refeição salva!");
         };
 
-        state.foodLogs.unshift(newFood);
-        
-        // Limpa os campos
-        getEl('food-name').value = '';
-        getEl('food-kcal').value = '';
-        getEl('food-prot').value = '';
-        if(getEl('food-carb')) getEl('food-carb').value = '';
-        if(getEl('food-fat')) getEl('food-fat').value = '';
+        const deleteFood = (id) => {
+            if(!confirm("Apagar esta refeição?")) return;
+            state.foodLogs = state.foodLogs.filter(f => f.id !== id);
+            touchState();
+            pushToCloud();
+            renderFood();
+            renderMacros();
+            showToast("Refeição removida.");
+        };
 
-        app.closeFoodModal();
-        
-        // ATUALIZAÇÕES CRUCIAIS:
-        touchState();
-        renderFood();
-        renderMacros(); // <--- OBRIGATÓRIO PARA O GRÁFICO MUDAR
-        
-        showToast("Refeição salva!");
-    };
+        const renderFood = () => {
+            const list = getEl('food-list');
+            const today = new Date().toISOString().split('T')[0];
+            const todaysMeals = (state.foodLogs || []).filter(f => f.date === today);
+            const totalKcal = todaysMeals.reduce((acc, item) => acc + item.kcal, 0);
+            const elKcal = getEl('today-kcal');
+            if(elKcal) elKcal.innerText = totalKcal;
 
-    const deleteFood = (id) => {
-        if(!confirm("Apagar esta refeição?")) return;
-        
-        state.foodLogs = state.foodLogs.filter(f => f.id !== id);
-        
-        touchState();
-        renderFood();
-        renderMacros();
-        
-        showToast("Refeição removida.");
-    };
-
-    const renderFood = () => {
-        const list = getEl('food-list');
-        const today = new Date().toISOString().split('T')[0];
-        
-        const todaysMeals = (state.foodLogs || []).filter(f => f.date === today);
-        
-        const totalKcal = todaysMeals.reduce((acc, item) => acc + item.kcal, 0);
-        const elKcal = getEl('today-kcal');
-        if(elKcal) elKcal.innerText = totalKcal;
-
-        if(list) {
-            if (todaysMeals.length === 0) {
-                list.innerHTML = `<div style="text-align:center; font-size:12px; color:var(--text-secondary); padding:10px;">Nada registrado hoje.</div>`;
-            } else {
-                list.innerHTML = todaysMeals.map(f => `
-                    <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-elevated); padding:8px 12px; border-radius:10px; font-size:13px;">
-                        <div>
-                            <div style="font-weight:600;">${f.name}</div>
-                            <div style="font-size:11px; color:var(--text-secondary);">${f.kcal} kcal • ${f.prot}g prot</div>
+            if(list) {
+                if (todaysMeals.length === 0) {
+                    list.innerHTML = `<div style="text-align:center; font-size:12px; color:var(--text-secondary); padding:10px;">Nada registrado hoje.</div>`;
+                } else {
+                    list.innerHTML = todaysMeals.map(f => `
+                        <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-elevated); padding:8px 12px; border-radius:10px; font-size:13px;">
+                            <div>
+                                <div style="font-weight:600;">${f.name}</div>
+                                <div style="font-size:11px; color:var(--text-secondary);">${f.kcal} kcal • ${f.prot}g prot</div>
+                            </div>
+                            <button onclick="app.deleteFood(${f.id})" style="background:none; border:none; color:var(--danger); cursor:pointer; padding:5px;">
+                                <i data-lucide="trash-2" width="14" height="14"></i>
+                            </button>
                         </div>
-                        <button onclick="app.deleteFood(${f.id})" style="background:none; border:none; color:var(--danger); cursor:pointer; padding:5px;">
-                            <i data-lucide="trash-2" width="14" height="14"></i>
-                        </button>
-                    </div>
-                `).join('');
-                if(window.lucide) lucide.createIcons();
+                    `).join('');
+                    if(window.lucide) lucide.createIcons();
+                }
             }
-        }
-    };
-
-    const quickAddFood = (name, kcal, prot, carb = 0, fat = 0) => {
-        // 1. Cria o objeto da comida
-        const newFood = {
-            id: Date.now(),
-            date: new Date().toISOString().split('T')[0],
-            name: name,
-            kcal: parseFloat(kcal) || 0,
-            prot: parseFloat(prot) || 0,
-            carb: parseFloat(carb) || 0,
-            fat: parseFloat(fat) || 0
         };
 
-        // 2. Adiciona APENAS UMA VEZ na lista
-        state.foodLogs.unshift(newFood);
-        
-        // 3. Atualiza tudo
-        touchState();        // Salva na memória
-        renderFood();        // Atualiza a lista visual
-        renderMacros();      // <--- ATUALIZA O GRÁFICO DE ROSCA NA HORA
-        
-        showToast(`Adicionado: ${name}`);
-    };
+        const quickAddFood = (name, kcal, prot, carb = 0, fat = 0) => {
+            const newFood = {
+                id: Date.now(),
+                date: new Date().toISOString().split('T')[0],
+                name: name,
+                kcal: parseFloat(kcal) || 0,
+                prot: parseFloat(prot) || 0,
+                carb: parseFloat(carb) || 0,
+                fat: parseFloat(fat) || 0
+            };
 
-    const addWater = (amount) => {
-        const today = new Date().toISOString().split('T')[0];
-        
-        if (state.water.date !== today) {
-            state.water = { current: 0, target: 3000, date: today };
-        }
-        
-        state.water.current += amount;
-        if(state.water.current < 0) state.water.current = 0;
-        
-        renderWater();
-        touchState();
-    };
+            state.foodLogs.unshift(newFood);
+            touchState();
+            pushToCloud();
+            renderFood();
+            renderMacros();
+            showToast(`Adicionado: ${name}`);
+        };
 
-    const renderWater = () => {
-        const elVal = getEl('water-val');
-        const elWave = getEl('water-wave');
-        
-        if (!elVal) return;
-        
-        // Verifica dia novamente ao renderizar
-        const today = new Date().toISOString().split('T')[0];
-        if (state.water.date !== today) state.water = { current: 0, target: 3000, date: today };
+        const addWater = (amount) => {
+            const today = new Date().toISOString().split('T')[0];
+            if (state.water.date !== today) {
+                state.water = { current: 0, target: 3000, date: today };
+            }
+            state.water.current += amount;
+            if(state.water.current < 0) state.water.current = 0;
+            renderWater();
+            touchState();
+        };
 
-        elVal.innerText = `${state.water.current} / ${state.water.target}ml`;
-        
-        // Altura da onda (máximo 100%)
-        const pct = Math.min((state.water.current / state.water.target) * 100, 100);
-        elWave.style.height = `${pct}%`;
-    };
+        const renderWater = () => {
+            const elVal = getEl('water-val');
+            const elWave = getEl('water-wave');
+            if (!elVal) return;
+            const today = new Date().toISOString().split('T')[0];
+            if (state.water.date !== today) state.water = { current: 0, target: 3000, date: today };
+            elVal.innerText = `${state.water.current} / ${state.water.target}ml`;
+            const pct = Math.min((state.water.current / state.water.target) * 100, 100);
+            elWave.style.height = `${pct}%`;
+        };
 
-    const defaultLayout = [
-        { id: 'card-weight', name: 'Peso Atual', visible: true, full: false },
-        { id: 'card-chart',  name: 'Gráfico',     visible: true, full: true },
-        { id: 'card-add',    name: 'Novo Registro', visible: true, full: false },
-        { id: 'card-food-list', name: 'Diário de Alimentos',  visible: true, full: false },
-        { id: 'card-water',  name: 'Água',        visible: true, full: false },
-        { id: 'card-macros', name: 'Macros',      visible: true, full: true }
+        const defaultLayoutHome = [
+            { id: 'card-weight', name: 'Peso Atual', visible: true, full: false },
+            { id: 'card-chart',  name: 'Gráfico',     visible: true, full: true },
+            { id: 'card-add',    name: 'Novo Registro', visible: true, full: false },
+            { id: 'card-food-list', name: 'Diário de Alimentos',  visible: true, full: false },
+            { id: 'card-water',  name: 'Água',        visible: true, full: false },
+            { id: 'card-macros', name: 'Macros',      visible: true, full: true }
+    ];
+
+    const defaultLayoutStats = [
+        { id: 'card-bmi', name: 'IMC', visible: true, full: false },
+        { id: 'card-weekly-stats', name: 'Média e Ritmo', visible: true, full: true },
+        { id: 'card-total-loss', name: 'Total Perdido', visible: true, full: false },
+        { id: 'card-projection', name: 'Projeção', visible: true, full: true },
+        { id: 'card-history', name: 'Histórico', visible: true, full: true }
     ];
 
     const initLayout = () => {
-        // Se não existir layout salvo, usa o padrão
-        if (!state.settings.layout || state.settings.layout.length === 0) {
-            state.settings.layout = JSON.parse(JSON.stringify(defaultLayout));
+        // Migra layout antigo se existir
+        if (state.settings.layout && Array.isArray(state.settings.layout) && state.settings.layout.length > 0) {
+            state.settings.layoutHome = [...state.settings.layout];
+            delete state.settings.layout; // Remove o antigo para não confundir
+        }
+
+        // Inicializa Home se estiver vazio
+        if (!state.settings.layoutHome || state.settings.layoutHome.length === 0) {
+            state.settings.layoutHome = JSON.parse(JSON.stringify(defaultLayoutHome));
         } else {
-            defaultLayout.forEach(defItem => {
-                const exists = state.settings.layout.find(i => i.id === defItem.id);
-                if (!exists) {
-                    state.settings.layout.push(defItem);
-                }
+            // Garante que novos cards (como Água) apareçam para quem já usa o app
+            defaultLayoutHome.forEach(def => {
+                 if (!state.settings.layoutHome.find(i => i.id === def.id)) state.settings.layoutHome.push(def);
             });
         }
-        applyLayout();
+
+        // Inicializa Stats se estiver vazio
+        if (!state.settings.layoutStats || state.settings.layoutStats.length === 0) {
+            state.settings.layoutStats = JSON.parse(JSON.stringify(defaultLayoutStats));
+        } else {
+             defaultLayoutStats.forEach(def => {
+                 if (!state.settings.layoutStats.find(i => i.id === def.id)) state.settings.layoutStats.push(def);
+            });
+        }
+
+        applyLayout('home');
+        applyLayout('stats');
     };
 
-    const applyLayout = () => {
-        const container = document.getElementById('view-home');
-        if (!container) return;
+    const applyLayout = (type) => {
+        const list = type === 'home' ? state.settings.layoutHome : state.settings.layoutStats;
+        const containerId = type === 'home' ? 'view-home' : 'view-stats';
+        const container = document.getElementById(containerId);
 
-        state.settings.layout.forEach(item => {
+        if (!container || !list) return;
+
+        list.forEach(item => {
             const el = document.getElementById(item.id);
             if (el) {
-                // A. Visibilidade
-                if (item.visible) el.classList.remove('hidden');
-                else el.classList.add('hidden');
-
-                // B. Tamanho (Full width ou não)
-                if (item.full) el.classList.add('col-full');
-                else el.classList.remove('col-full');
-
-                // C. Ordem (O appendChild move o elemento para o fim da lista, ordenando visualmente)
-                container.appendChild(el); 
+                 if (item.visible) el.classList.remove('hidden');
+                 else el.classList.add('hidden');
+                 if (item.full) el.classList.add('col-full');
+                 else el.classList.remove('col-full');
+                 container.appendChild(el); 
             }
         });
     };
 
     const openLayoutEditorMode = () => {
-        // Fecha o modal de configurações
+        // Detecta qual aba está visível
+        if (!getEl('view-home').classList.contains('hidden')) state.editingTab = 'home';
+        else if (!getEl('view-stats').classList.contains('hidden')) state.editingTab = 'stats';
+        else {
+            showToast("Abra a aba Dashboard ou Análise para editar.");
+            return;
+        }
+
         const modal = document.getElementById('modal-settings');
         if(modal) modal.classList.remove('active');
-
-        // Abre o painel inferior
         const panel = document.getElementById('layout-panel');
         if(panel) panel.classList.remove('hidden');
+        
+        // Atualiza título do painel (opcional, se tiver elemento de título)
+        const title = panel.querySelector('span');
+        if(title) title.innerText = state.editingTab === 'home' ? "Editando Dashboard" : "Editando Análise";
 
-        // Renderiza a lista NOVO LUGAR
         renderLayoutEditorPanel();
     };
 
-    // 2. Fecha o modo de edição
     const closeLayoutEditorMode = () => {
         const panel = document.getElementById('layout-panel');
         if(panel) panel.classList.add('hidden');
-        
-        // Opcional: Reabrir settings ou não? (Acho melhor não, volta pro app)
         showToast("Layout salvo!");
     };
 
     const renderLayoutEditorPanel = () => {
         const listEl = document.getElementById('layout-editor-list-panel');
         if (!listEl) return;
-        
         listEl.innerHTML = '';
 
-        state.settings.layout.forEach((item, index) => {
-            const div = document.createElement('div');
-            
-            // Define a cor e o ícone baseados no estado ATUAL
-            const isFull = item.full;
-            const isVis = item.visible;
+        // Seleciona a lista correta baseado na aba
+        const list = state.editingTab === 'home' ? state.settings.layoutHome : state.settings.layoutStats;
 
-            // Ícone Tamanho: Se full = colorido e ícone de minimizar. Se não = cinza e maximizar.
+        list.forEach((item, index) => {
+            const div = document.createElement('div');
+            const isFull = item.full; const isVis = item.visible;
+            
+            // Estilos
             const iconSize = isFull ? 'minimize-2' : 'maximize-2';
             const styleSize = isFull ? 'color:var(--accent);' : 'color:var(--text-secondary); opacity: 0.5;';
-
-            // Ícone Visibilidade: Se visível = normal. Se oculto = cinza transparente e olho cortado.
             const iconEye = isVis ? 'eye' : 'eye-off';
-            const styleEye = isVis ? 'color:var(--text-primary);' : 'color:var(--danger);'; // Vermelho se oculto fica legal para indicar "desligado"
+            const styleEye = isVis ? 'color:var(--text-primary);' : 'color:var(--danger);'; 
 
             div.style.cssText = "display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.05); padding:10px 14px; border-radius:12px; margin-bottom:8px; border:1px solid var(--border); transition: all 0.2s;";
             
             div.innerHTML = `
                 <span style="font-size:14px; font-weight:600; ${!isVis ? 'opacity:0.5; text-decoration:line-through;' : ''}">${item.name}</span>
-                
                 <div style="display:flex; gap:12px; align-items:center;">
-                    
-                    <button onclick="app.layoutAction('size', ${index})" style="background:none; border:none; cursor:pointer; padding:4px; ${styleSize}" title="Expandir/Recolher">
-                        <i data-lucide="${iconSize}" width="20" height="20"></i>
-                    </button>
-
-                    <button onclick="app.layoutAction('vis', ${index})" style="background:none; border:none; cursor:pointer; padding:4px; ${styleEye}" title="Mostrar/Ocultar">
-                        <i data-lucide="${iconEye}" width="20" height="20"></i>
-                    </button>
-
+                    <button onclick="app.layoutAction('size', ${index})" style="background:none; border:none; cursor:pointer; padding:4px; ${styleSize}"><i data-lucide="${iconSize}" width="20" height="20"></i></button>
+                    <button onclick="app.layoutAction('vis', ${index})" style="background:none; border:none; cursor:pointer; padding:4px; ${styleEye}"><i data-lucide="${iconEye}" width="20" height="20"></i></button>
                     <div style="width:1px; height:20px; background:var(--border);"></div>
-
                     <div style="display:flex; gap:4px;">
                         <button onclick="app.layoutAction('up', ${index})" style="background:none; border:none; color:var(--text-primary); cursor:pointer; padding:4px;"><i data-lucide="arrow-up" width="20" height="20"></i></button>
                         <button onclick="app.layoutAction('down', ${index})" style="background:none; border:none; color:var(--text-primary); cursor:pointer; padding:4px;"><i data-lucide="arrow-down" width="20" height="20"></i></button>
@@ -2092,89 +2007,39 @@ const App = (() => {
             `;
             listEl.appendChild(div);
         });
-        
-        // RECRIA OS ÍCONES (Essencial)
         if(window.lucide) lucide.createIcons();
     };
 
     const layoutAction = (action, index) => {
-        const list = state.settings.layout;
+        const list = state.editingTab === 'home' ? state.settings.layoutHome : state.settings.layoutStats;
         
-        // 1. Muda o estado (Lógica)
-        if (action === 'vis') {
-            list[index].visible = !list[index].visible;
-        } 
-        else if (action === 'size') {
-            list[index].full = !list[index].full;
+        if (action === 'vis') list[index].visible = !list[index].visible;
+        else if (action === 'size') list[index].full = !list[index].full;
+        else if (action === 'up') { 
+            if (index > 0) [list[index], list[index-1]] = [list[index-1], list[index]]; 
         }
-        else if (action === 'up') {
-            if (index > 0) {
-                [list[index], list[index-1]] = [list[index-1], list[index]];
-            }
+        else if (action === 'down') { 
+            if (index < list.length - 1) [list[index], list[index+1]] = [list[index+1], list[index]]; 
         }
-        else if (action === 'down') {
-            if (index < list.length - 1) {
-                [list[index], list[index+1]] = [list[index+1], list[index]];
-            }
-        }
-
-        // 2. Aplica na Home (Para você ver o card sumindo/movendo)
-        applyLayout();
         
-        // 3. ATUALIZA O PAINEL (Para o botão mudar de cor/ícone) <--- O SEGREDO ESTÁ AQUI
+        applyLayout(state.editingTab);
         renderLayoutEditorPanel();
 
-        // 4. Salva
         touchState(); 
+        pushToCloud();
     };
 
-    const renderLayoutEditor = () => {
-        const list = document.getElementById('layout-editor-list');
-        if (!list) return;
-        
-        list.innerHTML = ''; // Limpa
+        return { 
+            init, addEntry, deleteEntry, renderChart, nav, toggleSettings, 
+            setTheme, saveSettings, aiPrompt, sendAI, exportPDF, enterPin, 
+            togglePinSetup, googleLogin, logout, handleImageUpload, clearImage, 
+            handleRangeChange, saveChat: (h) => { state.chatHistory = []; saveLocal(); },
+            ask, resolvePrompt,
+            toggleFoodModal, closeFoodModal, saveFood, deleteFood, quickAddFood, addWater,
+            layoutAction, openLayoutEditorMode, closeLayoutEditorMode
+        };
+    })();
 
-        state.settings.layout.forEach((item, index) => {
-            const div = document.createElement('div');
-            div.style.cssText = "display:flex; align-items:center; justify-content:space-between; background:var(--bg-elevated); padding:10px; border-radius:12px;";
-            
-            div.innerHTML = `
-                <span style="font-size:13px; font-weight:500;">${item.name}</span>
-                <div style="display:flex; gap:5px;">
-                    <button class="btn-icon" style="width:30px; height:30px; ${item.full ? 'background:var(--accent); color:white;' : ''}" onclick="app.layoutAction('size', ${index})">
-                        <i data-lucide="${item.full ? 'minimize-2' : 'maximize-2'}" width="14" height="14"></i>
-                    </button>
-
-                    <button class="btn-icon" style="width:30px; height:30px; ${!item.visible ? 'opacity:0.5' : ''}" onclick="app.layoutAction('vis', ${index})">
-                        <i data-lucide="${item.visible ? 'eye' : 'eye-off'}" width="14" height="14"></i>
-                    </button>
-
-                    <div style="display:flex; flex-direction:column; gap:2px;">
-                        <button onclick="app.layoutAction('up', ${index})" style="background:none; border:none; color:var(--text-primary); cursor:pointer; padding:0;"><i data-lucide="chevron-up" width="14" height="14"></i></button>
-                        <button onclick="app.layoutAction('down', ${index})" style="background:none; border:none; color:var(--text-primary); cursor:pointer; padding:0;"><i data-lucide="chevron-down" width="14" height="14"></i></button>
-                    </div>
-                </div>
-            `;
-            list.appendChild(div);
-        });
-        if(window.lucide) lucide.createIcons();
-    };
-
-    return { 
-        init, addEntry, deleteEntry, renderChart, nav, toggleSettings, 
-        setTheme, saveSettings, aiPrompt, sendAI, exportPDF, enterPin, 
-        togglePinSetup, googleLogin, logout, handleImageUpload, clearImage, 
-        handleRangeChange, saveChat: (h) => { state.chatHistory = []; saveLocal(); },
-        ask, 
-        resolvePrompt,
-        toggleFoodModal, saveFood, deleteFood, quickAddFood, addWater,
-        layoutAction,
-        openLayoutEditorMode, 
-        closeLayoutEditorMode
-
-    };
-})();
-
-document.addEventListener('DOMContentLoaded', App.init);
-window.app = App;
+    document.addEventListener('DOMContentLoaded', App.init);
+    window.app = App;
 </script>
