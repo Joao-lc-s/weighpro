@@ -260,7 +260,7 @@ main { order: 3; padding-bottom: 20px !important; }
         .desktop-link.active { color: var(--accent); background: rgba(125,125,125,0.1); }
 
         /* --- TOAST & PIN --- */
-        .toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 2000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .toast-container { position: fixed; top: 50px; left: 50%; transform: translateX(-50%); z-index: 2000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
         .toast { background: var(--bg-elevated); color: var(--text-primary); padding: 12px 20px; border-radius: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 8px; animation: slideDown 0.3s; pointer-events: auto; border: 1px solid var(--border); }
         
         #pin-overlay {
@@ -347,7 +347,7 @@ main { order: 3; padding-bottom: 20px !important; }
 
     <main>
         <div id="view-home" class="dashboard-grid">
-            <div class="card">
+            <div class="card" style="height: 100%;" id="card-food-list">
                 <span class="stat-label">Diário de Hoje</span>
                 <div class="row" style="margin-bottom:15px;">
                     <div>
@@ -362,12 +362,16 @@ main { order: 3; padding-bottom: 20px !important; }
                 <div id="food-list" style="display:flex; flex-direction:column; gap:8px; max-height:150px; overflow-y:auto;">
                     </div>
             </div>
-            <div class="card">
+            <div class="card" id="card-weight">
                 <span class="stat-label">Peso Atual</span>
                 <div class="row">
                     <div>
                         <span class="stat-big" id="val-current">--</span>
                         <span style="font-size:18px; color:var(--text-secondary); font-weight:600">kg</span>
+                        
+                        <div id="loss-percent" style="font-size: 13px; font-weight: 600; color: var(--success); margin-top: -4px; opacity: 0;">
+                            0% da meta
+                        </div>
                     </div>
                     <div id="trend-pill" style="padding:6px 12px; border-radius:12px; font-size:13px; font-weight:700; background: var(--bg-elevated);">--</div>
                 </div>
@@ -384,7 +388,7 @@ main { order: 3; padding-bottom: 20px !important; }
                 </div>
             </div>
 
-            <div class="card">
+            <div class="card" id="card-add" style="height: 100%;">
                 <span class="stat-label">Novo Registro</span>
                 <div style="display:flex; flex-direction:column; gap:12px; margin-top:10px;">
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
@@ -397,7 +401,7 @@ main { order: 3; padding-bottom: 20px !important; }
                 </div>
             </div>
 
-            <div class="card col-full">
+            <div class="card col-full" id="card-chart">
                 <div class="row" style="margin-bottom:15px; flex-wrap:wrap; gap:10px;">
                     <span class="stat-label" style="margin:0">Evolução</span>
                     <select id="chart-range" onchange="app.handleRangeChange()" style="background:var(--bg-elevated); color:var(--text-primary); border:none; border-radius:8px; padding:6px 12px; font-size:12px; outline:none; cursor: pointer;">
@@ -431,6 +435,40 @@ main { order: 3; padding-bottom: 20px !important; }
                         <span>Sem dados suficientes para o gráfico.</span>
                     </div>
                 </div>
+                <div class="card" id="card-water">
+                    <div class="row">
+                        <span class="stat-label">Hidratação</span>
+                        <span id="water-val" style="font-weight:700; color:var(--accent);">0 / 3000ml</span>
+                    </div>
+                    
+                    <div style="height:150px; display:flex; flex-direction:column; justify-content:center; align-items:center; position:relative;">
+                        <div id="water-wave" style="position:absolute; bottom:0; left:0; width:100%; height:0%; background:linear-gradient(0deg, var(--accent) 0%, rgba(10,132,255,0.2) 100%); transition: height 0.5s; border-radius:0 0 20px 20px; opacity:0.3; pointer-events:none;"></div>
+                        
+                        <i data-lucide="droplets" width="40" height="40" style="color:var(--accent); margin-bottom:10px; z-index:2;"></i>
+                        
+                        <div style="display:flex; gap:10px; z-index:2;">
+                            <button class="action-chip" onclick="app.addWater(250)" style="background:var(--bg-elevated);">+250ml</button>
+                            <button class="action-chip" onclick="app.addWater(500)" style="background:var(--bg-elevated);">+500ml</button>
+                        </div>
+                        <button onclick="app.addWater(-250)" style="margin-top:8px; background:none; border:none; color:var(--text-secondary); font-size:11px; cursor:pointer; z-index:2;">Desfazer</button>
+                    </div>
+                </div>
+
+                <div class="card" id="card-macros">
+                    <span class="stat-label">Macros do Dia</span>
+                    <div style="height:160px; position:relative; display:flex; align-items:center; justify-content:center;">
+                        <canvas id="macroChart"></canvas>
+                        <div style="position:absolute; text-align:center; pointer-events:none;">
+                            <div id="macro-total" style="font-size:24px; font-weight:800;">0</div>
+                            <div style="font-size:10px; color:var(--text-secondary);">Kcal</div>
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:space-around; margin-top:10px; font-size:11px; color:var(--text-secondary);">
+                        <span style="color:#FF453A">Prot</span>
+                        <span style="color:#FFD60A">Carb</span>
+                        <span style="color:#32D74B">Gord</span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -460,6 +498,8 @@ main { order: 3; padding-bottom: 20px !important; }
                     <div class="chip-grid">
                         <button class="action-chip" onclick="app.aiPrompt('receita')"><i data-lucide="cooking-pot" width="20" height="20"></i> Receita Fit</button>
                         <button class="action-chip" onclick="app.aiPrompt('coach')"><i data-lucide="trending-up" width="20" height="20"></i> Coach Semanal</button>
+                        <button class="action-chip" onclick="app.aiPrompt('futuro')"><i data-lucide="clock" width="16" height="16"></i> Futuro</button>
+                        <button class="action-chip" onclick="app.aiPrompt('dieta')"><i data-lucide="utensils" width="16" height="16"></i> Plano Dieta</button>
                     </div>
 
                     <div id="img-preview-container" class="hidden" style="position:relative; width:fit-content; margin-bottom:15px; animation: slideUp 0.2s;">
@@ -474,7 +514,7 @@ main { order: 3; padding-bottom: 20px !important; }
 
                         <input type="file" id="file-upload" accept="image/*" hidden onchange="app.handleImageUpload(this)">
                         
-                        <textarea id="ai-input" class="modern-input" rows="1" placeholder="Digite aqui..." style="border-radius: 25px; padding-top: 14px; resize: none; overflow: hidden; min-height: 50px; line-height: 1.3;"></textarea>
+                        <textarea id="ai-input" class="modern-input" rows="1" placeholder="Digite aqui..." style="border-radius: 25px; padding-top: 7px; padding-bottom: 7px; resize: none; overflow: hidden; min-height: 50px; line-height: 1.3;"></textarea>
                         <button class="btn-send" onclick="app.sendAI()" style="width: 50px; height: 50px; flex-shrink: 0; border-radius: 50%; background: var(--accent); border: none; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 15px var(--accent-glow);">
                             <i data-lucide="send-horizontal" width="20" height="20"></i>
                         </button>
@@ -607,14 +647,14 @@ main { order: 3; padding-bottom: 20px !important; }
             <label style="position: relative; display: inline-block; width: 50px; height: 28px;">
                 <input type="checkbox" id="chk-pin" onchange="app.togglePinSetup()" style="opacity: 0; width: 0; height: 0;">
                 <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--bg-body); transition: .4s; border-radius: 34px; border: 1px solid var(--border);"></span>
-                <span style="position: absolute; content: ''; height: 20px; width: 20px; left: 4px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2);" id="pin-knob"></span>
+                <span style="position: absolute; content: ''; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2);" id="pin-knob"></span>
             </label>
         </div>
         <style>
             #chk-pin:checked + span { background-color: var(--accent); }
             #chk-pin:checked + span + span { transform: translateX(20px); }
         </style>
-
+        
         <span class="stat-label">Nuvem</span>
         <div id="firebase-ui-area" style="margin-bottom:25px; padding:15px; border:1px solid var(--border); border-radius:16px; background: var(--bg-elevated);">
             
@@ -629,12 +669,36 @@ main { order: 3; padding-bottom: 20px !important; }
             <div id="user-status" style="font-size:12px; margin-top:10px; color:var(--text-secondary); display:flex; align-items:center; gap:5px;">
                 <i data-lucide="circle" width="10" height="10"></i> Offline
             </div>
+                <div class="row" style="margin-bottom: 5px; background:var(--bg-elevated); padding-left:15px; border-radius:16px; padding-top: 15px;">
+                    <div style="display:flex; flex-direction:column;">
+                        <span style="font-size:14px; font-weight: 500;">Desativar sincronização</span>
+                        <span style="font-size:11px; color:var(--text-secondary);">Recebe dados da nuvem, mas não envia alterações.</span>
+                    </div>
+                    <label style="position: relative; display: inline-block; width: 50px; height: 28px;">
+                        <input type="checkbox" id="chk-readonly" style="opacity: 0; width: 0; height: 0;">
+                        <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--bg-body); transition: .4s; border-radius: 34px; border: 1px solid var(--border);"></span>
+                        <span style="position: absolute; content: ''; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2);"></span>
+                    </label>
+                </div>
+
+                <style>
+                    #chk-readonly:checked + span { background-color: var(--accent); }
+                    #chk-readonly:checked + span + span { transform: translateX(20px); }
+                </style>
         </div>
 
         <span class="stat-label">Metas Corporais</span>
         <div class="row" style="gap:10px; margin-bottom:10px;">
             <input type="number" id="cfg-goal" class="modern-input" placeholder="Meta (kg)" style="height: 45px;">
             <input type="number" id="cfg-height" class="modern-input" placeholder="Altura (cm)" style="height: 45px;">
+        </div>
+
+        <div style="margin-top: 20px; border-top: 1px solid var(--border); padding-top: 20px;">
+            <span class="stat-label">Personalização</span>
+            <button class="btn-primary" onclick="app.openLayoutEditorMode()" style="background: var(--bg-elevated); color: var(--text-primary); border: 1px solid var(--border);">
+                <i data-lucide="layout" width="18" height="18"></i> 
+                Editar Posição dos Cards
+            </button>
         </div>
         
         <button class="btn-primary" onclick="app.saveSettings()" style="margin-top: 20px;">Salvar Alterações</button>
@@ -659,9 +723,11 @@ main { order: 3; padding-bottom: 20px !important; }
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
                 <input type="number" id="food-kcal" class="modern-input" placeholder="Calorias (kcal)">
                 <input type="number" id="food-prot" class="modern-input" placeholder="Proteína (g)">
+                <input type="number" id="food-carb" class="modern-input" placeholder="Carboidrato (g)" style="padding:0 10px;"> 
+                <input type="number" id="food-fat" class="modern-input" placeholder="Gordura (g)" style="padding:0 10px;">
             </div>
 
-            <button class="btn-primary" onclick="app.saveFood()">
+            <button class="btn-primary" onclick="app.saveFood()" style="margin-top: 20px;">
                 <i data-lucide="check" width="20" height="20"></i> Salvar Registro
             </button>
         </div>
@@ -683,6 +749,33 @@ main { order: 3; padding-bottom: 20px !important; }
             </div>
         </div>
     </div>
+    <div id="layout-panel" class="hidden" style="
+    position: fixed; 
+    bottom: 0; 
+    left: 0; 
+    width: 100%; 
+    background: rgba(28, 28, 30, 0.95); /* Fundo quase sólido */
+    backdrop-filter: blur(10px);        /* Blur só no painel, não na tela toda */
+    -webkit-backdrop-filter: blur(10px);
+    border-top: 1px solid var(--accent);
+    z-index: 3000; /* Fica acima de tudo */
+    padding: 20px;
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    box-shadow: 0 -5px 30px rgba(0,0,0,0.5);
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+        <span style="font-weight:700; color:var(--accent); font-size:14px;">Editando Layout</span>
+        <button onclick="app.closeLayoutEditorMode()" style="background:var(--bg-elevated); border:none; color:var(--text-primary); padding:6px 12px; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer;">
+            Concluir
+        </button>
+    </div>
+
+    <div id="layout-editor-list-panel" style="max-height: 250px; overflow-y: auto;">
+        </div>
+</div>
 <script>
 const App = (() => {
     // --- STATE ---
@@ -691,6 +784,7 @@ const App = (() => {
         foodLogs: [],
         chatHistory: [],
         aiUsage: { count: 0, date: '' },
+        water: { current: 0, target: 3000, date: '' },
         settings: { 
             theme: 'dark', 
             goal: 70, 
@@ -698,7 +792,8 @@ const App = (() => {
             apiKey: '', 
             pin: null, 
             firebaseConfig: '',
-            aiModel: 'gemini-2.5-flash'
+            aiModel: 'gemini-2.5-flash',
+            readOnly: false
         },
         updatedAt: new Date(0).toISOString(),
         user: null,
@@ -723,7 +818,7 @@ const App = (() => {
         c.appendChild(t);
         setTimeout(() => {
             t.style.opacity = '0';
-            t.style.transform = 'translateY(-20px)';
+            t.style.transform = 'translateY(-40px)';
             setTimeout(() => t.remove(), 300);
         }, 3000);
     };
@@ -732,6 +827,9 @@ const App = (() => {
     const init = async () => {
         loadLocal();
         updateAIModelLabel();
+        renderWater();
+        renderMacros();
+        initLayout();
 
         if (state.settings.firebaseConfig) {
             tryInitFirebase(JSON.parse(state.settings.firebaseConfig));
@@ -942,6 +1040,15 @@ const App = (() => {
         state.settings = { ...state.settings, ...cloud.settings };
         
         state.updatedAt = cloud.updatedAt;
+        const cloudUsage = cloud.aiUsage || { count: 0, date: '' };
+        const today = new Date().toISOString().split('T')[0];
+
+        if (cloudUsage.date === today) {
+            state.aiUsage = cloudUsage;
+        } else {
+            state.aiUsage = { count: 0, date: today };
+        }
+
         saveLocal();
         render();
         if(state.chatHistory.length > 0) renderChatHistory();
@@ -950,14 +1057,20 @@ const App = (() => {
     };
 
     const pushToCloud = async () => {
+        if (state.settings.readOnly) {
+            console.log("Modo Espectador: Envio para nuvem bloqueado.");
+            return;
+        }
+
         if (!state.user || !db) return;
         const { doc, setDoc } = window.firebaseModules;
         
         await setDoc(doc(db, 'users', state.user.uid), { 
             entries: state.entries, 
-            chatHistory: state.chatHistory, // Sincroniza chat
+            chatHistory: state.chatHistory,
             settings: state.settings,
-            updatedAt: state.updatedAt // Manda a data atualizada
+            updatedAt: state.updatedAt,
+            aiUsage: state.aiUsage || { count: 0, date: new Date().toISOString().split('T')[0] }
         }, { merge: true });
     };
 
@@ -1006,6 +1119,26 @@ const App = (() => {
             getEl('smart-prediction').innerText = "";
             renderChart(); 
             getEl('history-list').innerHTML = `<div class="empty-state"><i class="ph ph-clipboard-text"></i>Sem registros ainda.</div>`;
+            
+            if (state.entries.length >= 2) {
+                const start = state.entries[state.entries.length-1].weight;
+                const current = state.entries[0].weight;
+                const lost = start - current;
+                const percent = (lost / start) * 100;
+                
+                const elPerc = document.getElementById('loss-percent');
+                if(elPerc) {
+                    elPerc.style.opacity = '1';
+                    if(lost > 0) {
+                        elPerc.innerText = `↓ ${percent.toFixed(1)}% do peso inicial`;
+                        elPerc.style.color = 'var(--success)';
+                    } else {
+                        elPerc.innerText = `↑ ${Math.abs(percent).toFixed(1)}% ganhou`;
+                        elPerc.style.color = 'var(--danger)';
+                    }
+                }
+            }
+            
             return;
         }
 
@@ -1232,24 +1365,80 @@ const App = (() => {
     };
 
     const aiPrompt = async (type) => {
-        if (type === 'receita') {
-            // Chama a janela de pergunta
-            const ingredientes = await app.ask("Quais ingredientes você tem?", "Ex: Ovos, frango, batata...");
-            
-            // Se cancelar, para aqui
-            if (!ingredientes) return;
+        const tx = getEl('ai-input');
+        
+        // --- 1. SIMULADOR DE FUTURO ---
+        if (type === 'futuro') {
+            // Coleta dados para análise matemática
+            const history = state.entries.slice(0, 10); // Pega os últimos 10 registros
+            if(history.length < 2) return showToast("Preciso de pelo menos 2 registros de peso!", "error");
 
-            const prompt = `Sugira uma receita fit rápida usando: ${ingredientes}. Inclua contagem de calorias.`;
-            getEl('ai-input').value = prompt;
-            getEl('ai-input').style.height = 'auto'; // Ajusta altura
+            const current = history[0].weight;
+            const old = history[history.length-1].weight;
+            const diff = current - old;
+            const days = (new Date(history[0].date) - new Date(history[history.length-1].date)) / (1000 * 60 * 60 * 24);
+            const rate = diff / (days || 1); // Kg por dia
+            
+            const prompt = `
+            Atue como um Matemático e Nutricionista.
+            Meus Dados:
+            - Peso Atual: ${current}kg
+            - Meta: ${state.settings.goal}kg
+            - Histórico recente: Perdi ${Math.abs(diff).toFixed(1)}kg em ${Math.round(days)} dias.
+            
+            Tarefa:
+            1. Calcule e projete EXATAMENTE em que data vou atingir minha meta se continuar nesse ritmo.
+            2. Se o ritmo estiver muito lento ou perigoso, me avise.
+            3. Seja curto e direto. Use formatação Markdown.
+            `;
+            tx.value = prompt;
+            sendAI();
+            tx.value = '';
+        }
+        
+        else if (type === 'dieta') {
+            const current = state.entries[0]?.weight || 'N/A';
+            const goal = state.settings.goal || 'N/A';
+            const height = state.settings.height || 'N/A';
+            
+            // Pergunta interativa para refinar
+            const preferencia = await app.ask("Preferência Alimentar?", "Ex: Low Carb, Barata, Vegana, Sem lactose...");
+            if (preferencia === null) return;
+
+            const prompt = `
+            Atue como um Nutricionista Esportivo de Elite. Crie um Plano Alimentar Completo para hoje.
+            
+            MEUS DADOS:
+            - Peso: ${current}kg
+            - Altura: ${height}cm
+            - Objetivo: Chegar em ${goal}kg
+            - Preferência: ${preferencia || 'Equilibrada e Simples'}
+            
+            SAÍDA ESPERADA (Use Markdown e tabelas):
+            1. Calcule minha Taxa Metabólica Basal (TMB) estimada e o Déficit necessário.
+            2. Crie um cardápio com: Café da Manhã, Almoço, Lanche e Jantar.
+            3. Coloque as calorias e proteínas aproximadas de cada refeição.
+            4. Dica de suplementação básica no final.
+            `;
+
+            tx.value = prompt;
+            
+            sendAI(); 
+            tx.value = '';
+        }
+
+        else if (type === 'receita') {
+            const ingredientes = await app.ask("Quais ingredientes você tem?", "Ex: Ovos, frango, batata...");
+            if (!ingredientes) return;
+            tx.value = `Sugira uma receita fit rápida usando: ${ingredientes}. Inclua contagem de calorias.`;
+            sendAI();
         } 
         else if (type === 'coach') {
-            getEl('ai-input').value = 'Analise meu progresso (considerando que quero perder peso) e me dê uma frase motivacional estoica.';
-            getEl('ai-input').style.height = 'auto';
+            tx.value = 'Analise meu progresso recente e me dê um feedback curto e motivacional estilo estoico.';
+            sendAI();
         }
     };
 
-    // Função para renderizar histórico ao carregar
     const renderChatHistory = () => {
         const feed = getEl('chat-feed');
         // Mantém a mensagem de boas vindas se for o único
@@ -1344,7 +1533,7 @@ const App = (() => {
             if (json.error) throw new Error(json.error.message);
             
             // --- 3. SUCESSO! ADICIONA +1 AGORA ---
-            state.aiUsage.count++; 
+            state.aiUsage.count++;
             updateUsageUI(); // Atualiza a tela (0/20 -> 1/20)
             touchState();    // Salva no localStorage
             console.log("Contador atualizado para:", state.aiUsage.count);
@@ -1483,6 +1672,8 @@ const App = (() => {
             getEl('cfg-height').value = state.settings.height;
             getEl('chk-pin').checked = !!state.settings.pin;
             getEl('cfg-model').value = state.settings.aiModel || 'gemini-2.5-flash';
+            getEl('chk-readonly').checked = !!state.settings.readOnly;
+            renderLayoutEditor();
         } else {
             m.classList.remove('active');
         }
@@ -1493,6 +1684,7 @@ const App = (() => {
         state.settings.goal = getEl('cfg-goal').value;
         state.settings.height = getEl('cfg-height').value;
         state.settings.aiModel = getEl('cfg-model').value;
+        state.settings.readOnly = getEl('chk-readonly').checked;
         touchState(); 
         pushToCloud();
         applyTheme(state.settings.theme);
@@ -1507,6 +1699,33 @@ const App = (() => {
 
     const setupUI = () => {
         const tx = getEl('ai-input');
+
+            if(tx) {
+                const autoResize = () => {
+                    tx.style.height = 'auto'; // Reseta
+                    tx.style.height = (tx.scrollHeight) + 'px'; // Cresce
+                    
+                    if(tx.scrollHeight > 150) tx.style.overflowY = "auto";
+                    else tx.style.overflowY = "hidden";
+                };
+
+                // 1. Ao digitar normalmente
+                tx.addEventListener('input', autoResize);
+                
+                // 2. CORREÇÃO: Ao colar (espera 10ms para o texto entrar)
+                tx.addEventListener('paste', () => setTimeout(autoResize, 10));
+                
+                // 3. Ao mudar o foco ou mudar valor
+                tx.addEventListener('change', autoResize);
+
+                // Atalho do Enter (mantido)
+                tx.addEventListener('keydown', (e) => {
+                    if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                        e.preventDefault();
+                        sendAI();
+                    }
+                });
+            }
 
         // 1. Auto-resize do Textarea
         tx.addEventListener('input', function() {
@@ -1584,6 +1803,44 @@ const App = (() => {
         else el.innerText = "Gemini 2.5 Flash";
     };
 
+    let macroChartInstance = null;
+
+    const renderMacros = () => {
+        const ctx = getEl('macroChart');
+        if(!ctx) return;
+        
+        const today = new Date().toISOString().split('T')[0];
+        const todaysMeals = (state.foodLogs || []).filter(f => f.date === today);
+        
+        const totalKcal = todaysMeals.reduce((a, b) => a + (b.kcal || 0), 0);
+        const totalProt = todaysMeals.reduce((a, b) => a + (b.prot || 0), 0);
+        const totalCarb = todaysMeals.reduce((a, b) => a + (b.carb || 0), 0);
+        const totalFat = todaysMeals.reduce((a, b) => a + (b.fat || 0), 0);
+
+        getEl('macro-total').innerText = totalKcal;
+
+        if(macroChartInstance) macroChartInstance.destroy();
+
+        macroChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Prot', 'Carb', 'Gord'],
+                datasets: [{
+                    data: [totalProt, totalCarb, totalFat],
+                    backgroundColor: ['#FF453A', '#FFD60A', '#32D74B'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                cutout: '75%', // Espessura da rosca
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } } // Esconde a legenda padrão
+            }
+        });
+    };
+
     // --- FUNÇÕES DE NUTRIÇÃO ---
     const toggleFoodModal = () => {
         const m = getEl('modal-food');
@@ -1595,18 +1852,18 @@ const App = (() => {
         const name = getEl('food-name').value;
         const kcal = parseFloat(getEl('food-kcal').value) || 0;
         const prot = parseFloat(getEl('food-prot').value) || 0;
+        const carb = parseFloat(getEl('food-carb').value) || 0; // NOVO
+        const fat = parseFloat(getEl('food-fat').value) || 0;   // NOVO
 
         if(!name) return showToast("Digite um nome", "error");
 
         const newFood = {
             id: Date.now(),
-            date: new Date().toISOString().split('T')[0], // Salva a data de hoje (AAAA-MM-DD)
-            name, kcal, prot
+            date: new Date().toISOString().split('T')[0],
+            name, kcal, prot, carb, fat
         };
 
-        state.foodLogs.unshift(newFood); // Adiciona no topo da lista
-        
-        // Limpa os campos
+        state.foodLogs.unshift(newFood);
         getEl('food-name').value = '';
         getEl('food-kcal').value = '';
         getEl('food-prot').value = '';
@@ -1616,6 +1873,7 @@ const App = (() => {
         touchState(); // Salva no local
         pushToCloud(); // Salva no Firebase
         showToast("Refeição salva!", "success");
+        renderMacros();
     };
 
     const deleteFood = (id) => {
@@ -1668,14 +1926,226 @@ const App = (() => {
 
         state.foodLogs.unshift(newFood);
         
-        renderFood(); // Atualiza a lista na Home
+        renderFood();
         touchState();
         pushToCloud();
         
         showToast(`Salvo: ${name} (${kcal}kcal)`, "success");
         
         // Opcional: Leva o usuário de volta pra Home para ver
-        // app.nav('home'); 
+        // app.nav('home');
+    };
+
+    const addWater = (amount) => {
+        const today = new Date().toISOString().split('T')[0];
+        
+        if (state.water.date !== today) {
+            state.water = { current: 0, target: 3000, date: today };
+        }
+        
+        state.water.current += amount;
+        if(state.water.current < 0) state.water.current = 0;
+        
+        renderWater();
+        touchState();
+    };
+
+    const renderWater = () => {
+        const elVal = getEl('water-val');
+        const elWave = getEl('water-wave');
+        
+        if (!elVal) return;
+        
+        // Verifica dia novamente ao renderizar
+        const today = new Date().toISOString().split('T')[0];
+        if (state.water.date !== today) state.water = { current: 0, target: 3000, date: today };
+
+        elVal.innerText = `${state.water.current} / ${state.water.target}ml`;
+        
+        // Altura da onda (máximo 100%)
+        const pct = Math.min((state.water.current / state.water.target) * 100, 100);
+        elWave.style.height = `${pct}%`;
+    };
+
+    const defaultLayout = [
+        { id: 'card-weight', name: 'Peso Atual', visible: true, full: false },
+        { id: 'card-chart',  name: 'Gráfico',     visible: true, full: true },
+        { id: 'card-add',    name: 'Novo Registro', visible: true, full: false },
+        { id: 'card-food-list', name: 'Diário de Alimentos',  visible: true, full: false },
+        { id: 'card-water',  name: 'Água',        visible: true, full: false },
+        { id: 'card-macros', name: 'Macros',      visible: true, full: true }
+    ];
+
+    const initLayout = () => {
+        // Se não existir layout salvo, usa o padrão
+        if (!state.settings.layout || state.settings.layout.length === 0) {
+            state.settings.layout = JSON.parse(JSON.stringify(defaultLayout));
+        } else {
+            defaultLayout.forEach(defItem => {
+                const exists = state.settings.layout.find(i => i.id === defItem.id);
+                if (!exists) {
+                    state.settings.layout.push(defItem);
+                }
+            });
+        }
+        applyLayout();
+    };
+
+    const applyLayout = () => {
+        const container = document.getElementById('view-home');
+        if (!container) return;
+
+        state.settings.layout.forEach(item => {
+            const el = document.getElementById(item.id);
+            if (el) {
+                // A. Visibilidade
+                if (item.visible) el.classList.remove('hidden');
+                else el.classList.add('hidden');
+
+                // B. Tamanho (Full width ou não)
+                if (item.full) el.classList.add('col-full');
+                else el.classList.remove('col-full');
+
+                // C. Ordem (O appendChild move o elemento para o fim da lista, ordenando visualmente)
+                container.appendChild(el); 
+            }
+        });
+    };
+
+    const openLayoutEditorMode = () => {
+        // Fecha o modal de configurações
+        const modal = document.getElementById('modal-settings');
+        if(modal) modal.classList.remove('active');
+
+        // Abre o painel inferior
+        const panel = document.getElementById('layout-panel');
+        if(panel) panel.classList.remove('hidden');
+
+        // Renderiza a lista NOVO LUGAR
+        renderLayoutEditorPanel();
+    };
+
+    // 2. Fecha o modo de edição
+    const closeLayoutEditorMode = () => {
+        const panel = document.getElementById('layout-panel');
+        if(panel) panel.classList.add('hidden');
+        
+        // Opcional: Reabrir settings ou não? (Acho melhor não, volta pro app)
+        showToast("Layout salvo!");
+    };
+
+    const renderLayoutEditorPanel = () => {
+        const listEl = document.getElementById('layout-editor-list-panel');
+        if (!listEl) return;
+        
+        listEl.innerHTML = '';
+
+        state.settings.layout.forEach((item, index) => {
+            const div = document.createElement('div');
+            
+            // Define a cor e o ícone baseados no estado ATUAL
+            const isFull = item.full;
+            const isVis = item.visible;
+
+            // Ícone Tamanho: Se full = colorido e ícone de minimizar. Se não = cinza e maximizar.
+            const iconSize = isFull ? 'minimize-2' : 'maximize-2';
+            const styleSize = isFull ? 'color:var(--accent);' : 'color:var(--text-secondary); opacity: 0.5;';
+
+            // Ícone Visibilidade: Se visível = normal. Se oculto = cinza transparente e olho cortado.
+            const iconEye = isVis ? 'eye' : 'eye-off';
+            const styleEye = isVis ? 'color:var(--text-primary);' : 'color:var(--danger);'; // Vermelho se oculto fica legal para indicar "desligado"
+
+            div.style.cssText = "display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.05); padding:10px 14px; border-radius:12px; margin-bottom:8px; border:1px solid var(--border); transition: all 0.2s;";
+            
+            div.innerHTML = `
+                <span style="font-size:14px; font-weight:600; ${!isVis ? 'opacity:0.5; text-decoration:line-through;' : ''}">${item.name}</span>
+                
+                <div style="display:flex; gap:12px; align-items:center;">
+                    
+                    <button onclick="app.layoutAction('size', ${index})" style="background:none; border:none; cursor:pointer; padding:4px; ${styleSize}" title="Expandir/Recolher">
+                        <i data-lucide="${iconSize}" width="20" height="20"></i>
+                    </button>
+
+                    <button onclick="app.layoutAction('vis', ${index})" style="background:none; border:none; cursor:pointer; padding:4px; ${styleEye}" title="Mostrar/Ocultar">
+                        <i data-lucide="${iconEye}" width="20" height="20"></i>
+                    </button>
+
+                    <div style="width:1px; height:20px; background:var(--border);"></div>
+
+                    <div style="display:flex; gap:4px;">
+                        <button onclick="app.layoutAction('up', ${index})" style="background:none; border:none; color:var(--text-primary); cursor:pointer; padding:4px;"><i data-lucide="arrow-up" width="20" height="20"></i></button>
+                        <button onclick="app.layoutAction('down', ${index})" style="background:none; border:none; color:var(--text-primary); cursor:pointer; padding:4px;"><i data-lucide="arrow-down" width="20" height="20"></i></button>
+                    </div>
+                </div>
+            `;
+            listEl.appendChild(div);
+        });
+        
+        // RECRIA OS ÍCONES (Essencial)
+        if(window.lucide) lucide.createIcons();
+    };
+
+    const layoutAction = (action, index) => {
+        const list = state.settings.layout;
+        
+        // 1. Muda o estado (Lógica)
+        if (action === 'vis') {
+            list[index].visible = !list[index].visible;
+        } 
+        else if (action === 'size') {
+            list[index].full = !list[index].full;
+        }
+        else if (action === 'up') {
+            if (index > 0) {
+                [list[index], list[index-1]] = [list[index-1], list[index]];
+            }
+        }
+        else if (action === 'down') {
+            if (index < list.length - 1) {
+                [list[index], list[index+1]] = [list[index+1], list[index]];
+            }
+        }
+
+        // 2. Aplica na Home (Para você ver o card sumindo/movendo)
+        applyLayout();
+        
+        // 3. ATUALIZA O PAINEL (Para o botão mudar de cor/ícone) <--- O SEGREDO ESTÁ AQUI
+        renderLayoutEditorPanel();
+
+        // 4. Salva
+        touchState(); 
+    };
+
+    const renderLayoutEditor = () => {
+        const list = document.getElementById('layout-editor-list');
+        if (!list) return;
+        
+        list.innerHTML = ''; // Limpa
+
+        state.settings.layout.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.style.cssText = "display:flex; align-items:center; justify-content:space-between; background:var(--bg-elevated); padding:10px; border-radius:12px;";
+            
+            div.innerHTML = `
+                <span style="font-size:13px; font-weight:500;">${item.name}</span>
+                <div style="display:flex; gap:5px;">
+                    <button class="btn-icon" style="width:30px; height:30px; ${item.full ? 'background:var(--accent); color:white;' : ''}" onclick="app.layoutAction('size', ${index})">
+                        <i data-lucide="${item.full ? 'minimize-2' : 'maximize-2'}" width="14" height="14"></i>
+                    </button>
+
+                    <button class="btn-icon" style="width:30px; height:30px; ${!item.visible ? 'opacity:0.5' : ''}" onclick="app.layoutAction('vis', ${index})">
+                        <i data-lucide="${item.visible ? 'eye' : 'eye-off'}" width="14" height="14"></i>
+                    </button>
+
+                    <div style="display:flex; flex-direction:column; gap:2px;">
+                        <button onclick="app.layoutAction('up', ${index})" style="background:none; border:none; color:var(--text-primary); cursor:pointer; padding:0;"><i data-lucide="chevron-up" width="14" height="14"></i></button>
+                        <button onclick="app.layoutAction('down', ${index})" style="background:none; border:none; color:var(--text-primary); cursor:pointer; padding:0;"><i data-lucide="chevron-down" width="14" height="14"></i></button>
+                    </div>
+                </div>
+            `;
+            list.appendChild(div);
+        });
+        if(window.lucide) lucide.createIcons();
     };
 
     return { 
@@ -1685,7 +2155,11 @@ const App = (() => {
         handleRangeChange, saveChat: (h) => { state.chatHistory = []; saveLocal(); },
         ask, 
         resolvePrompt,
-        toggleFoodModal, saveFood, deleteFood, quickAddFood
+        toggleFoodModal, saveFood, deleteFood, quickAddFood, addWater,
+        layoutAction,
+        openLayoutEditorMode, 
+        closeLayoutEditorMode
+
     };
 })();
 
