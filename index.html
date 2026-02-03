@@ -1551,7 +1551,7 @@ const App = (() => {
                         aiTxt = aiTxt.replace(jsonMatch[0], '');
                         buttonHtml = `
                         <div style="margin-top:10px; border-top:1px solid var(--border); padding-top:10px;">
-                            <button class="action-chip" onclick="app.quickAddFood('${data.name}', ${data.kcal}, ${data.prot})">
+                            <button class="action-chip" onclick="app.quickAddFood('${data.name}', ${data.kcal}, ${data.prot}, 0, 0); this.disabled=true; this.innerText='Adicionado!';">
                                 <i data-lucide="plus-circle" width="16" height="16"></i> 
                                 Salvar: ${data.name} (${data.kcal}kcal)
                             </button>
@@ -1848,12 +1848,13 @@ const App = (() => {
         if(m.classList.contains('active')) getEl('food-name').focus();
     };
 
+    // --- CORREÇÃO: SALVAR MANUALMENTE (MODAL) ---
     const saveFood = () => {
         const name = getEl('food-name').value;
         const kcal = parseFloat(getEl('food-kcal').value) || 0;
         const prot = parseFloat(getEl('food-prot').value) || 0;
-        const carb = parseFloat(getEl('food-carb').value) || 0; // NOVO
-        const fat = parseFloat(getEl('food-fat').value) || 0;   // NOVO
+        const carb = parseFloat(getEl('food-carb').value) || 0;
+        const fat = parseFloat(getEl('food-fat').value) || 0;
 
         if(!name) return showToast("Digite um nome", "error");
 
@@ -1864,25 +1865,34 @@ const App = (() => {
         };
 
         state.foodLogs.unshift(newFood);
+        
+        // Limpa os campos
         getEl('food-name').value = '';
         getEl('food-kcal').value = '';
         getEl('food-prot').value = '';
+        if(getEl('food-carb')) getEl('food-carb').value = '';
+        if(getEl('food-fat')) getEl('food-fat').value = '';
+
+        app.closeFoodModal();
         
-        toggleFoodModal();
+        // ATUALIZAÇÕES CRUCIAIS:
+        touchState();
         renderFood();
-        touchState(); // Salva no local
-        pushToCloud(); // Salva no Firebase
-        showToast("Refeição salva!", "success");
-        renderMacros();
+        renderMacros(); // <--- OBRIGATÓRIO PARA O GRÁFICO MUDAR
+        
+        showToast("Refeição salva!");
     };
 
     const deleteFood = (id) => {
-        if(confirm("Apagar esta refeição?")) {
-            state.foodLogs = state.foodLogs.filter(f => f.id !== id);
-            renderFood();
-            touchState();
-            pushToCloud();
-        }
+        if(!confirm("Apagar esta refeição?")) return;
+        
+        state.foodLogs = state.foodLogs.filter(f => f.id !== id);
+        
+        touchState();
+        renderFood();
+        renderMacros();
+        
+        showToast("Refeição removida.");
     };
 
     const renderFood = () => {
@@ -1915,25 +1925,27 @@ const App = (() => {
         }
     };
 
-    const quickAddFood = (name, kcal, prot) => {
+    const quickAddFood = (name, kcal, prot, carb = 0, fat = 0) => {
+        // 1. Cria o objeto da comida
         const newFood = {
             id: Date.now(),
             date: new Date().toISOString().split('T')[0],
             name: name,
-            kcal: parseFloat(kcal),
-            prot: parseFloat(prot)
+            kcal: parseFloat(kcal) || 0,
+            prot: parseFloat(prot) || 0,
+            carb: parseFloat(carb) || 0,
+            fat: parseFloat(fat) || 0
         };
 
+        // 2. Adiciona APENAS UMA VEZ na lista
         state.foodLogs.unshift(newFood);
         
-        renderFood();
-        touchState();
-        pushToCloud();
+        // 3. Atualiza tudo
+        touchState();        // Salva na memória
+        renderFood();        // Atualiza a lista visual
+        renderMacros();      // <--- ATUALIZA O GRÁFICO DE ROSCA NA HORA
         
-        showToast(`Salvo: ${name} (${kcal}kcal)`, "success");
-        
-        // Opcional: Leva o usuário de volta pra Home para ver
-        // app.nav('home');
+        showToast(`Adicionado: ${name}`);
     };
 
     const addWater = (amount) => {
