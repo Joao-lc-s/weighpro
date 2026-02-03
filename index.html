@@ -1270,6 +1270,21 @@ const App = (() => {
         pushToCloud();
     };
 
+    const updateUsageUI = () => {
+        // Tenta achar o elemento pelo ID que criamos no HTML
+        const el = document.getElementById('ai-counter'); 
+        
+        if(el && state.aiUsage) {
+            el.innerText = `${state.aiUsage.count}/20`;
+            
+            // Pinta de vermelho se lotou
+            if(state.aiUsage.count >= 20) {
+                el.style.color = 'var(--danger)';
+                el.style.border = '1px solid var(--danger)';
+            }
+        }
+    };
+
     const sendAI = async () => {
         const txt = getEl('ai-input').value.trim();
         const img = state.currentImageBase64;
@@ -1277,9 +1292,17 @@ const App = (() => {
         if (!txt && !img) return;
         if (!state.settings.apiKey) return showToast("Configure a API Key.", "error");
 
+        // --- 1. GARANTIA DO CONTADOR (Auto-correção) ---
+        if (!state.aiUsage) state.aiUsage = { count: 0, date: new Date().toISOString().split('T')[0] };
+
+        // --- 2. VERIFICAÇÃO DE LIMITE ---
+        if (state.aiUsage.count >= 20) {
+            return showToast("Limite diário (20) atingido. Volte amanhã!", "error");
+        }
+
         const feed = getEl('chat-feed');
         
-        // 1. UI User (Mostra o que você enviou)
+        // UI User
         const userHtml = `${txt} ${img ? '<div style="margin-top:5px; font-size:11px; opacity:0.8"><i class="ph-fill ph-image"></i> Imagem enviada</div>' : ''}`;
         feed.innerHTML += `<div class="chat-bubble chat-user">${userHtml}</div>`;
         saveChatMsg('user', userHtml);
@@ -1287,33 +1310,25 @@ const App = (() => {
         getEl('ai-input').value = '';
         clearImage();
         
-        // 2. Loader (Analisando...)
+        // Loader
         const loadId = 'load-' + Date.now();
         feed.innerHTML += `<div class="chat-bubble chat-ai" id="${loadId}"><i data-lucide="loader-2" class="spin" width="16" height="16"></i> Analisando...</div>`;
         if(window.lucide) lucide.createIcons();
         feed.scrollTo(0, feed.scrollHeight);
 
         try {
-            const model = state.settings.aiModel || "gemini-2.5-flash";
+            const model = state.settings.aiModel || "gemini-1.5-flash";
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${state.settings.apiKey}`;
             
-            // --- O TRUQUE ESTÁ AQUI: INSTRUÇÃO ESPECIAL ---
+            // Prompt do Sistema (Botão de Comida + Personalidade)
             const systemPrompt = `
-            Você é um nutricionista do app WeighPro. 
-            Se o usuário enviar uma foto de comida ou descrever uma refeição, VOCÊ DEVE responder NO FINAL da sua explicação com um bloco de código JSON estrito neste formato para eu criar um botão:
-            
+            Você é um nutricionista do app WeightPro. 
+            Se o usuário enviar uma foto de comida ou descrever uma refeição, responda NO FINAL com este JSON estrito:
             \`\`\`json
-            {
-                "tool": "addFood",
-                "name": "Nome do Prato Resumido",
-                "kcal": 500,
-                "prot": 30
-            }
+            { "tool": "addFood", "name": "Nome Curto", "kcal": 0, "prot": 0 }
             \`\`\`
-            
-            Se não for comida, responda apenas texto normal amigável em Markdown. Seja conciso.
-            Contexto: Peso atual ${state.entries[0]?.weight || '?'}kg, Meta ${state.settings.goal}kg.
-            `;
+            Se não for comida, apenas texto útil em Markdown.
+            Contexto: Peso ${state.entries[0]?.weight || '?'}kg, Meta ${state.settings.goal}kg.`;
 
             const parts = [{ text: systemPrompt }];
             if (txt) parts.push({ text: txt });
@@ -1328,23 +1343,23 @@ const App = (() => {
             const json = await resp.json();
             if (json.error) throw new Error(json.error.message);
             
+            // --- 3. SUCESSO! ADICIONA +1 AGORA ---
+            state.aiUsage.count++; 
+            updateUsageUI(); // Atualiza a tela (0/20 -> 1/20)
+            touchState();    // Salva no localStorage
+            console.log("Contador atualizado para:", state.aiUsage.count);
+            // -------------------------------------
+
             let aiTxt = json.candidates[0].content.parts[0].text;
-            
-            // 3. Processar a resposta para achar o botão
             let buttonHtml = '';
             
-            // Regex para capturar o bloco JSON
+            // Tenta achar o botão de comida (JSON)
             const jsonMatch = aiTxt.match(/```json\s*([\s\S]*?)\s*```/);
-            
             if (jsonMatch) {
                 try {
                     const data = JSON.parse(jsonMatch[1]);
                     if (data.tool === 'addFood') {
-                        // Remove o JSON do texto visível para não ficar feio
                         aiTxt = aiTxt.replace(jsonMatch[0], '');
-                        
-                        // Cria o Botão Mágico
-                        // Usamos aspas simples escapadas \' nos argumentos
                         buttonHtml = `
                         <div style="margin-top:10px; border-top:1px solid var(--border); padding-top:10px;">
                             <button class="action-chip" onclick="app.quickAddFood('${data.name}', ${data.kcal}, ${data.prot})">
@@ -1353,20 +1368,19 @@ const App = (() => {
                             </button>
                         </div>`;
                     }
-                } catch (e) { console.error("Erro ao parsear JSON da IA", e); }
+                } catch (e) { console.error("JSON Parse Error", e); }
             }
 
             const finalHtml = marked.parse(aiTxt) + buttonHtml;
-            
             document.getElementById(loadId).innerHTML = finalHtml;
             saveChatMsg('ai', finalHtml);
             
-            // Atualiza ícones do botão novo
             if(window.lucide) lucide.createIcons();
             
         } catch(e) {
             document.getElementById(loadId).innerText = "Erro: " + e.message;
             document.getElementById(loadId).style.color = "var(--danger)";
+            console.error("Erro na IA:", e);
         }
         feed.scrollTo(0, feed.scrollHeight);
     };
