@@ -848,77 +848,50 @@ main { order: 3; padding-bottom: 20px !important; }
 
         // --- INIT ---
         const init = async () => {
-            loadLocal();
-            updateAIModelLabel();
-            renderWater();
-            renderMacros();
-            initLayout();
+        loadLocal();
+        updateAIModelLabel();
+        
+        // CORREÇÃO: Atualiza o contador visualmente logo ao abrir
+        updateUsageUI(); 
+        
+        renderWater();
+        renderMacros();
+        initLayout();
 
-            if (state.settings.firebaseConfig) {
-                tryInitFirebase(JSON.parse(state.settings.firebaseConfig));
-            }
+        if (state.settings.firebaseConfig) {
+            tryInitFirebase(JSON.parse(state.settings.firebaseConfig));
+        }
 
-            if (state.settings.pin && !state.unlocked) {
-                getEl('pin-overlay').classList.add('locked');
+        if (state.settings.pin && !state.unlocked) {
+            getEl('pin-overlay').classList.add('locked');
+        } else {
+            getEl('main-app').classList.add('loaded');
+        }
+
+        setupUI();
+        if(window.lucide) lucide.createIcons();
+        render();
+        if(state.chatHistory.length > 0) renderChatHistory();
+    };
+
+    // Certifique-se que esta função existe assim:
+    const updateUsageUI = () => {
+        const el = document.getElementById('ai-counter'); 
+        if(el && state.aiUsage) {
+            el.innerText = `${state.aiUsage.count}/20`;
+            if(state.aiUsage.count >= 20) {
+                el.style.color = 'var(--danger)';
+                el.style.border = '1px solid var(--danger)';
             } else {
-                getEl('main-app').classList.add('loaded');
+                // Reseta estilo se for novo dia
+                el.style.color = 'var(--text-secondary)';
+                el.style.border = 'none';
+                el.style.background = 'var(--bg-elevated)';
             }
+        }
+    };
 
-            // --- CORREÇÃO: SetupUI unificado e movido para dentro do init ---
-            const setupUI = () => {
-                const tx = getEl('ai-input');
-                const nav = document.querySelector('.bottom-nav');
-
-                if(tx) {
-                    const autoResize = () => {
-                        tx.style.height = 'auto'; 
-                        tx.style.height = (tx.scrollHeight) + 'px'; 
-                        if(tx.scrollHeight > 150) tx.style.overflowY = "auto";
-                        else tx.style.overflowY = "hidden";
-                    };
-
-                    tx.addEventListener('input', autoResize);
-                    // Correção para colar texto
-                    tx.addEventListener('paste', () => setTimeout(autoResize, 10));
-                    
-                    tx.addEventListener('keydown', (e) => {
-                        if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                            e.preventDefault();
-                            sendAI();
-                        }
-                    });
-                }
-                
-                const inputs = document.querySelectorAll('input, textarea');
-                inputs.forEach(inp => {
-                    inp.addEventListener('focus', () => {
-                        if(window.innerWidth < 768 && nav) nav.style.display = 'none';
-                    });
-                    
-                    inp.addEventListener('blur', () => {
-                        setTimeout(() => {
-                            // Verifica se o foco não foi para outro input
-                            if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
-                                if(nav) nav.style.display = 'flex';
-                            }
-                        }, 200);
-                    });
-                });
-
-                document.body.addEventListener('touchmove', (e) => {
-                    if(getEl('modal-settings').classList.contains('active')) return;
-                }, {passive: false});
-            };
-            
-            setupUI();
-            
-            if(window.lucide) lucide.createIcons();
-            render();
-            
-            if(state.chatHistory.length > 0) renderChatHistory();
-        };
-
-        const loadLocal = () => {
+    const loadLocal = () => {
         try {
             const d = localStorage.getItem('wp_data');
             if (d) {
@@ -926,24 +899,24 @@ main { order: 3; padding-bottom: 20px !important; }
                 const today = new Date().toISOString().split('T')[0];
 
                 if (Array.isArray(parsed)) {
-                    // Migração de versões antigas
+                    // Migração antiga
                     state.entries = parsed;
                     state.aiUsage = { count: 0, date: today };
                 } else {
-                    // Carregamento padrão
                     state.entries = parsed.entries || [];
                     state.chatHistory = parsed.chatHistory || [];
-                    state.foodLogs = parsed.foodLogs || []; // Carrega comidas
+                    
+                    // CORREÇÃO: Carrega a comida
+                    state.foodLogs = parsed.foodLogs || []; 
+                    
                     state.updatedAt = parsed.updatedAt || new Date(0).toISOString();
                     
-                    // Carrega Água ou inicia zerada
+                    // CORREÇÃO: Carrega água e IA com validação de data
                     state.water = parsed.water || { current: 0, target: 3000, date: today };
+                    if (state.water.date !== today) state.water = { current: 0, target: 3000, date: today };
                     
-                    // Valida data do contador de IA e Água
                     if (state.aiUsage && state.aiUsage.date !== today) state.aiUsage = { count: 0, date: today };
                     else state.aiUsage = parsed.aiUsage || { count: 0, date: today };
-
-                    if (state.water.date !== today) state.water = { current: 0, target: 3000, date: today };
                 }
             } else {
                 state.aiUsage = { count: 0, date: new Date().toISOString().split('T')[0] };
@@ -961,19 +934,18 @@ main { order: 3; padding-bottom: 20px !important; }
         } catch(e) { console.error("Erro load", e); }
     };
 
-        const saveLocal = () => {
-            const dataToSave = {
-                entries: state.entries,
-                chatHistory: state.chatHistory,
-                foodLogs: state.foodLogs,
-                updatedAt: state.updatedAt,
-                water: state.water,
-                aiUsage: state.aiUsage
-
-            };
-            localStorage.setItem('wp_data', JSON.stringify(dataToSave));
-            localStorage.setItem('wp_settings', JSON.stringify(state.settings));
+    const saveLocal = () => {
+        const dataToSave = {
+            entries: state.entries,
+            chatHistory: state.chatHistory,
+            foodLogs: state.foodLogs, // AGORA ESTÁ AQUI
+            updatedAt: state.updatedAt,
+            water: state.water,
+            aiUsage: state.aiUsage
         };
+        localStorage.setItem('wp_data', JSON.stringify(dataToSave));
+        localStorage.setItem('wp_settings', JSON.stringify(state.settings));
+    };
 
         const touchState = () => {
             state.updatedAt = new Date().toISOString();
@@ -1458,17 +1430,6 @@ main { order: 3; padding-bottom: 20px !important; }
             pushToCloud();
         };
 
-        const updateUsageUI = () => {
-            const el = document.getElementById('ai-counter'); 
-            if(el && state.aiUsage) {
-                el.innerText = `${state.aiUsage.count}/20`;
-                if(state.aiUsage.count >= 20) {
-                    el.style.color = 'var(--danger)';
-                    el.style.border = '1px solid var(--danger)';
-                }
-            }
-        };
-
         const sendAI = async () => {
             const txt = getEl('ai-input').value.trim();
             const img = state.currentImageBase64;
@@ -1721,95 +1682,123 @@ main { order: 3; padding-bottom: 20px !important; }
 
         let macroChartInstance = null;
         const renderMacros = () => {
-            const ctx = getEl('macroChart');
-            if(!ctx) return;
-            
-            const today = new Date().toISOString().split('T')[0];
-            const todaysMeals = (state.foodLogs || []).filter(f => f.date === today);
-            
-            const totalProt = todaysMeals.reduce((a, b) => a + (b.prot || 0), 0);
-            const totalCarb = todaysMeals.reduce((a, b) => a + (b.carb || 0), 0);
-            const totalFat = todaysMeals.reduce((a, b) => a + (b.fat || 0), 0);
-            const totalKcal = todaysMeals.reduce((a, b) => a + (b.kcal || 0), 0);
+        const ctx = getEl('macroChart');
+        if(!ctx) return;
+        
+        const today = new Date().toISOString().split('T')[0];
+        const todaysMeals = (state.foodLogs || []).filter(f => f.date === today);
+        
+        const totalProt = todaysMeals.reduce((a, b) => a + (b.prot || 0), 0);
+        const totalCarb = todaysMeals.reduce((a, b) => a + (b.carb || 0), 0);
+        const totalFat = todaysMeals.reduce((a, b) => a + (b.fat || 0), 0);
+        const totalKcal = todaysMeals.reduce((a, b) => a + (b.kcal || 0), 0);
 
-            getEl('macro-total').innerText = totalKcal;
+        const elTotal = getEl('macro-total');
+        if(elTotal) elTotal.innerText = Math.round(totalKcal);
 
-            if(macroChartInstance) macroChartInstance.destroy();
+        // CORREÇÃO: Destruir gráfico anterior para não bugar
+        if(macroChartInstance) {
+            macroChartInstance.destroy();
+            macroChartInstance = null;
+        }
 
-            macroChartInstance = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Prot', 'Carb', 'Gord'],
-                    datasets: [{
-                        data: [totalProt, totalCarb, totalFat],
-                        backgroundColor: ['#FF453A', '#FFD60A', '#32D74B'],
-                        borderWidth: 0,
-                        hoverOffset: 4
-                    }]
-                },
-                options: {
-                    cutout: '75%', 
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } } 
-                }
-            });
+        macroChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Prot', 'Carb', 'Gord'],
+                datasets: [{
+                    data: [totalProt, totalCarb, totalFat],
+                    backgroundColor: ['#FF453A', '#FFD60A', '#32D74B'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                cutout: '75%', 
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 500 }, // Animação suave
+                plugins: { legend: { display: false } } 
+            }
+        });
+    };
+
+    const quickAddFood = (name, kcal, prot, carb = 0, fat = 0) => {
+        const newFood = {
+            id: Date.now(),
+            date: new Date().toISOString().split('T')[0],
+            name: name,
+            kcal: parseFloat(kcal) || 0,
+            prot: parseFloat(prot) || 0,
+            carb: parseFloat(carb) || 0,
+            fat: parseFloat(fat) || 0
         };
+
+        state.foodLogs.unshift(newFood);
+        
+        // Salva e Renderiza tudo
+        touchState();
+        pushToCloud();
+        renderFood();
+        renderMacros(); // Força atualização do gráfico
+        
+        showToast(`Adicionado: ${name}`);
+    };
 
         // --- FOOD ---
-        const toggleFoodModal = () => {
-            const m = getEl('modal-food');
-            m.classList.toggle('active');
-            if(m.classList.contains('active')) getEl('food-name').focus();
-        };
+    const toggleFoodModal = () => {
+        const m = getEl('modal-food');
+        m.classList.toggle('active');
+        if(m.classList.contains('active')) getEl('food-name').focus();
+    };
         
-        // --- CORREÇÃO: Função estava faltando ---
-        const closeFoodModal = () => {
-            const m = getEl('modal-food');
-            m.classList.remove('active');
+    // --- CORREÇÃO: Função estava faltando ---
+    const closeFoodModal = () => {
+        const m = getEl('modal-food');
+        m.classList.remove('active');
+    };
+
+    const saveFood = () => {
+        const name = getEl('food-name').value;
+        const kcal = parseFloat(getEl('food-kcal').value) || 0;
+        const prot = parseFloat(getEl('food-prot').value) || 0;
+        const carb = parseFloat(getEl('food-carb').value) || 0;
+        const fat = parseFloat(getEl('food-fat').value) || 0;
+
+        if(!name) return showToast("Digite um nome", "error");
+
+        const newFood = {
+            id: Date.now(),
+            date: new Date().toISOString().split('T')[0],
+            name, kcal, prot, carb, fat
         };
 
-        const saveFood = () => {
-            const name = getEl('food-name').value;
-            const kcal = parseFloat(getEl('food-kcal').value) || 0;
-            const prot = parseFloat(getEl('food-prot').value) || 0;
-            const carb = parseFloat(getEl('food-carb').value) || 0;
-            const fat = parseFloat(getEl('food-fat').value) || 0;
+        state.foodLogs.unshift(newFood);
 
-            if(!name) return showToast("Digite um nome", "error");
+        getEl('food-name').value = '';
+        getEl('food-kcal').value = '';
+        getEl('food-prot').value = '';
+        if(getEl('food-carb')) getEl('food-carb').value = '';
+        if(getEl('food-fat')) getEl('food-fat').value = '';
 
-            const newFood = {
-                id: Date.now(),
-                date: new Date().toISOString().split('T')[0],
-                name, kcal, prot, carb, fat
-            };
-
-            state.foodLogs.unshift(newFood);
+        closeFoodModal(); // Agora funciona
+        touchState();
+        pushToCloud();
+        renderFood();
+        renderMacros(); 
             
-            getEl('food-name').value = '';
-            getEl('food-kcal').value = '';
-            getEl('food-prot').value = '';
-            if(getEl('food-carb')) getEl('food-carb').value = '';
-            if(getEl('food-fat')) getEl('food-fat').value = '';
+        showToast("Refeição salva!");
+    };
 
-            closeFoodModal(); // Agora funciona
-            touchState();
-            pushToCloud();
-            renderFood();
-            renderMacros(); 
-            
-            showToast("Refeição salva!");
-        };
-
-        const deleteFood = (id) => {
-            if(!confirm("Apagar esta refeição?")) return;
+    const deleteFood = (id) => {
+        if(!confirm("Apagar esta refeição?")) return;
             state.foodLogs = state.foodLogs.filter(f => f.id !== id);
             touchState();
             pushToCloud();
             renderFood();
             renderMacros();
             showToast("Refeição removida.");
-        };
+    };
 
         const renderFood = () => {
             const list = getEl('food-list');
@@ -1837,25 +1826,6 @@ main { order: 3; padding-bottom: 20px !important; }
                     if(window.lucide) lucide.createIcons();
                 }
             }
-        };
-
-        const quickAddFood = (name, kcal, prot, carb = 0, fat = 0) => {
-            const newFood = {
-                id: Date.now(),
-                date: new Date().toISOString().split('T')[0],
-                name: name,
-                kcal: parseFloat(kcal) || 0,
-                prot: parseFloat(prot) || 0,
-                carb: parseFloat(carb) || 0,
-                fat: parseFloat(fat) || 0
-            };
-
-            state.foodLogs.unshift(newFood);
-            touchState();
-            pushToCloud();
-            renderFood();
-            renderMacros();
-            showToast(`Adicionado: ${name}`);
         };
 
         const addWater = (amount) => {
